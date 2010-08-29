@@ -35,6 +35,10 @@ local spellsub = {
 	[(GetSpellInfo(53407))] = L["Judgement"], -- Judgement of Justice
 	[(GetSpellInfo(16979))] = (GetSpellInfo(49377)), -- 16979 Feral Charge - Bear, 49377 Feral Charge (Talent)
 	[(GetSpellInfo(49376))] = (GetSpellInfo(49377)), -- 16979 Feral Charge - Cat,  49377 Feral Charge (Talent)
+	[(GetSpellInfo(6572))] = L["Reactive Attacks"], -- 6572 Revenge
+	[(GetSpellInfo(7384))] = L["Reactive Attacks"], -- 7384 Overpower
+	[(GetSpellInfo(72))] = L["Interrupts"], -- 72 Shield Bash
+	[(GetSpellInfo(6552))] = L["Interrupts"], -- 6552 Pummel
 }
 
 local itemsub = {

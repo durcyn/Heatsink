@@ -24,7 +24,7 @@ libs\LibCandyBar-3.0\bars.lua
 libs\LibInternalCooldowns-1.0\lib.xml
 #@end-no-lib-strip@
 
-locale-enUS.lua
+Locale.lua
 Heatsink.lua
 Config.lua
 Data.lua
