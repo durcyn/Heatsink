@@ -431,7 +431,7 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 end
 
 function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
-	if (unit == "player" or unit == "pet" or unit == "vehicle") then
+	if (unit == "player" or unit == "pet") then
 		if db.show.spells then
 			last = spell
 		end
