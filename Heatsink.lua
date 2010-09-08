@@ -115,16 +115,16 @@ local ARCANE = L["%s School"]:format(_G.STRING_SCHOOL_ARCANE)
 local school = {
 	["WARLOCK"] = {
 		[SHADOW] = (GetSpellInfo(686)), -- 686 Shadow Bolt 
-		[FIRE]   = (GetSpellInfo(5676)), -- 5676 Searing Pain
+		[FIRE]   = (GetSpellInfo(348)), -- 348 Immolate
 	},
 	["MAGE"] = {
-		[ARCANE] = (GetSpellInfo(5143)), -- 5343 Arcane Missiles 
+		[ARCANE] = (GetSpellInfo(5143)), -- 5143 Arcane Missiles 
 		[FIRE]   = (GetSpellInfo(133)),  -- 133 Fireball
 		[FROST]  = (GetSpellInfo(116)), -- 116 Frostbolt
 	},
 	["DRUID"] = {
 		[ARCANE] = (GetSpellInfo(8921)), -- 8921 Moonfire
-		[NATURE] = (GetSpellInfo(5185)), -- 5185 Healing Touch
+		[NATURE] = (GetSpellInfo(5176)), -- 5176 Wrath
 	},
 	["SHAMAN"] = {
 		[NATURE]   = (GetSpellInfo(403)), -- 403 Lightning Bolt
