@@ -7,7 +7,7 @@ local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale("Heatsink")
 local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
-local anchor, db, class
+local anchor, db, class, last
 
 local GCD = 1.5
 
@@ -376,6 +376,7 @@ function Heatsink:OnEnable()
 	class = english
 
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 
 	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5, "ScanItems")
 	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5,"ScanItems")
@@ -429,19 +430,23 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 	end
 end
 
-function Heatsink:UNIT_SPELLCAST_SUCCEEDED(unit, spell)
+function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	if (unit == "player" or unit == "pet" or unit == "vehicle") then
 		if db.show.spells then
-			local start, duration = GetSpellCooldown(spell)
-			if duration and duration > GCD then
-				local name, rank, icon = GetSpellInfo(spell)
-				startBar(name, start, duration, icon)
-			end
+			last = spell
 		end
 	end
 end
 
 function Heatsink:SPELL_UPDATE_COOLDOWN()
+	if db.show.spells and last then
+		local start, duration = GetSpellCooldown(last)
+		if duration and duration > GCD then
+			local name, rank, icon = GetSpellInfo(last)
+			startBar(name, start, duration, icon)
+		end
+	end
+
 	for spell in pairs(force) do
 		local start, duration = GetSpellCooldown(spell)
 		if duration and duration > GCD then
