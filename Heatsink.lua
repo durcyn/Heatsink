@@ -9,11 +9,8 @@ local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local anchor, db, class
 
-local RUNE_COOLDOWN = 10
 local GCD = 1.5
 
-local BOOKTYPE_PET = _G.BOOKTYPE_PET
-local BOOKTYPE_SPELL = _G.BOOKTYPE_SPELL
 local CreateFrame = _G.CreateFrame
 local GameFontNormal = _G.GameFontNormal
 local GetContainerItemCooldown = _G.GetContainerItemCooldown
@@ -25,15 +22,11 @@ local GetInventoryItemLink = _G.GetInventoryItemLink
 local GetInventoryItemTexture = _G.GetInventoryItemTexture
 local GetInventorySlotInfo = _G.GetInventorySlotInfo
 local GetItemInfo = _G.GetItemInfo
-local GetNumSpellTabs = _G.GetNumSpellTabs
-local GetRealZoneText = _G.GetRealZoneText
 local GetSpellCooldown = _G.GetSpellCooldown
 local GetSpellInfo = _G.GetSpellInfo
 local GetSpellName = _G.GetSpellName
-local GetSpellTabInfo = _G.GetSpellTabInfo
 local GetTime = _G.GetTime
 local UnitClass = _G.UnitClass
-local UnitGUID = _G.UnitGUID
 local ipairs = _G.ipairs
 local pairs = _G.pairs
 local unpack = _G.unpack
@@ -44,7 +37,6 @@ local find = _G.string.find
 local random = _G.math.random
 local tinsert = _G.table.insert
 local tsort = _G.table.sort
-
 
 local defaults = {
 	profile = {
@@ -78,6 +70,78 @@ local defaults = {
 			proc = true,
 		},
 	},
+}
+
+local slots = {	
+		[(GetInventorySlotInfo("Trinket0Slot"))] = true, 
+		[(GetInventorySlotInfo("Trinket1Slot"))] = true,
+		[(GetInventorySlotInfo("Finger0Slot"))] = true,
+		[(GetInventorySlotInfo("Finger1Slot"))] = true,
+		[(GetInventorySlotInfo("TabardSlot"))] = true,
+		[(GetInventorySlotInfo("HeadSlot"))] = true,
+	}
+
+local substitute = {
+	[L["Mana Jade"]] = L["Stones"],
+	[L["Mana Ruby"]] = L["Stones"],
+	[L["Mana Citrine"]] = L["Stones"],
+	[L["Mana Agate"]] = L["Stones"],
+	[L["Mana Emerald"]] = L["Stones"],
+	[L["Healthstone$"]] = L["Stones"],
+	[L["Potion"]] = L["Potions"],
+	[L["Injector"]] = L["Potions"],
+	[L["Blue Ogre Brew Special"]]= L["Potions"],  --Ogri'la
+	[L["Red Ogre Brew Special"]] = L["Potions"],  --Ogri'la
+	[L["Blue Ogre Brew"]]= L["Potions"],  --Ogri'la
+	[L["Red Ogre Brew"]] = L["Potions"],  --Ogri'la
+	[L["Bottled Nethergon Energy"]] = L["Potions"],  --Tempest Keep
+	[L["Bottled Nethergon Vapor"]] = L["Potions"],   --Tempest Keep
+	[L["Cenarion Mana Salve"]] = L["Potions"],   --Cenarion Expedition
+	[L["Cenarion Healing Salve"]] = L["Potions"],   --Cenarion Expedition
+	[L["Major Healing Draught"]] = L["Potions"],   --PvP
+	[L["Major Mana Draught"]] = L["Potions"],   --PvP
+	[L["Superior Mana Draught"]] = L["Potions"],   --PvP
+	[L["Superior Healing Draught"]] = L["Potions"],   --PvP
+	[L["Noth's Special Brew"]] = L["Potions"], -- Deathknight Starting Area
+}
+
+local FIRE = L["%s School"]:format(_G.STRING_SCHOOL_FIRE)
+local SHADOW = L["%s School"]:format(_G.STRING_SCHOOL_SHADOW)
+local FROST = L["%s School"]:format(_G.STRING_SCHOOL_FROST)
+local HOLY = L["%s School"]:format(_G.STRING_SCHOOL_HOLY)
+local NATURE = L["%s School"]:format(_G.STRING_SCHOOL_NATURE)
+local ARCANE = L["%s School"]:format(_G.STRING_SCHOOL_ARCANE)
+
+local school = {
+	["WARLOCK"] = {
+		[SHADOW] = (GetSpellInfo(686)), -- 686 Shadow Bolt 
+		[FIRE]   = (GetSpellInfo(5676)), -- 5676 Searing Pain
+	},
+	["MAGE"] = {
+		[ARCANE] = (GetSpellInfo(5143)), -- 5343 Arcane Missiles 
+		[FIRE]   = (GetSpellInfo(133)),  -- 133 Fireball
+		[FROST]  = (GetSpellInfo(116)), -- 116 Frostbolt
+	},
+	["DRUID"] = {
+		[ARCANE] = (GetSpellInfo(5185)), -- XXXX Moonfire?
+		[NATURE] = (GetSpellInfo(5185)), -- 5185 Healing Touch
+	},
+	["SHAMAN"] = {
+		[NATURE]   = (GetSpellInfo(403)), -- 403 Lightning Bolt
+		[FIRE]     = (GetSpellInfo(8024)), -- 8024 Flametongue Weapon
+		[FROST]    = (GetSpellInfo(8033)), -- 8033 Frostbrand Weapon
+	},
+	["PRIEST"] = {
+		[HOLY] = (GetSpellInfo(585)), --585 Smite
+		[SHADOW] = (GetSpellInfo(589)), -- 589 Shadow Word: Pain
+	},
+	["PALADIN"] = {
+		[HOLY] = (GetSpellInfo(635)), -- 635 Holy Light
+	},
+}
+
+local force = {
+	[(GetSpellInfo(20608))] = true, -- 20608 Reincarnation
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -171,10 +235,8 @@ do
 		return bar
 	end
 	
-	function startBar(text, start, duration, icon, update)
-		if getBar(text) and not update then
-			return
-		elseif duration >= db.min and duration <= db.max then
+	function startBar(text, start, duration, icon)
+		if duration >= db.min and duration <= db.max then
 			stopBar(text)
 			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
 			bar:Set("anchor", anchor)
@@ -196,20 +258,8 @@ do
 	end
 	
 	function runTest(anchor)
-		local tmp = {}
-		for i = 2, GetNumSpellTabs() do
-			local name, texture, offset, numSpells = GetSpellTabInfo(i)
-			if offset then
-				for s = offset + 1, offset + numSpells do
-					tinsert(tmp, (GetSpellName(s, BOOKTYPE_SPELL)))
-				end
-			end
-		end
-		local spell = tmp[random(1, #tmp)]
-		local name, rank, icon = GetSpellInfo(spell)
-		local duration = random(10, 30)
-		startBar(name, nil, duration, icon)
-		wipe(tmp)
+		local duration = random(5, 20)
+		startBar(L["Test"], nil, duration)
 	end
 	
 	function toggleAnchor(anchor)
@@ -325,17 +375,14 @@ function Heatsink:OnEnable()
 	local _, english = UnitClass("player")
 	class = english
 
-	self:RegisterEvent("SPELLS_CHANGED")
-	self:RegisterBucketEvent("PET_BAR_UPDATE_COOLDOWN", 0.1)
-	self:RegisterBucketEvent("SPELL_UPDATE_COOLDOWN", 1.0)
-	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.1, "ScanItems")
-	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.1,"ScanItems")
+	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+
+	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5, "ScanItems")
+	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5,"ScanItems")
 
 	icd.RegisterCallback(self, "InternalCooldowns_Proc")
 	candy.RegisterCallback(self, "LibCandyBar_Stop")
 
-	self:ScanPlayer()
-	self:ScanPet()
 	self:ScanItems()
 end
 
@@ -382,51 +429,33 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 	end
 end
 
-function Heatsink:SPELLS_CHANGED()
-	self:ScanPlayer()
-	self:ScanPet()
-end
-
-function Heatsink:SPELL_UPDATE_COOLDOWN()
-	if db.show.spells then
-		if db.show.school and self.schoolspell[class] then
-			for school,id in pairs(self.schoolspell[class]) do
-				local name, rank, icon = GetSpellInfo(id)
-				local start, duration = GetSpellCooldown(name)
-				if duration and duration > GCD then
-					startBar(school, start, duration, icon)
-					self.lockout[school] = true
-				else
-					self.lockout[school] = false
-				end
-
-			end
-		end
-		for spell, data in pairs(self.player) do
-			local start, duration, active = GetSpellCooldown(data.id, BOOKTYPE_SPELL)
-			if class == "DEATHKNIGHT" and duration == RUNE_COOLDOWN and not self.whitelist[spell] then
-				duration = -1
-			end
-			if db.show.school and data.schoolname and self.lockout[data.schoolname] then
-				duration = -1
-			end
-			if active ==1 and duration > GCD then
-				startBar(self.spellsub[spell] or spell, start, duration, data.icon)
-			elseif start == 0 and duration == 0 then
-				stopBar(spell)
+function Heatsink:UNIT_SPELLCAST_SUCCEEDED(unit, spell)
+	if (unit == "player" or unit == "pet" or unit == "vehicle") then
+		if db.show.spells then
+			local start, duration = GetSpellCooldown(spell)
+			if duration and duration > GCD then
+				local name, rank, icon = GetSpellInfo(spell)
+				startBar(name, start, duration, icon)
 			end
 		end
 	end
 end
 
-function Heatsink:PET_BAR_UPDATE_COOLDOWN()
-	if db.show.pet then
-		for spell, data in pairs(self.pet) do
-			local start, duration = GetSpellCooldown(data.id, BOOKTYPE_PET)
-			if duration > 0 then
-				startBar(spell, start, duration, data.icon)
-			elseif duration == 0 then
-				stopBar(spell)
+function Heatsink:SPELL_UPDATE_COOLDOWN()
+	for spell in pairs(force) do
+		local start, duration = GetSpellCooldown(spell)
+		if duration and duration > GCD then
+			local name, rank, icon = GetSpellInfo(spell)
+			startBar(name, start, duration, icon)
+		end
+	end
+
+	if school[class] then
+		for school, spell in pairs(school[class]) do
+			local start, duration = GetSpellCooldown(school)
+			if duration and duration > GCD then
+				local name, rank, icon = GetSpellInfo(spell)
+				startBar(school, start, duration, icon)
 			end
 		end
 	end
@@ -435,16 +464,16 @@ end
 function Heatsink:ScanItems()
 	if db.show.inventory then
 		for bag = 0,4 do
-			local slots = GetContainerNumSlots(bag)
-			for slot = 1,slots do
+			local bagslots = GetContainerNumSlots(bag)
+			for slot = 1, bagslots do
 				local start, duration, enabled = GetContainerItemCooldown(bag,slot)
 				if enabled == 1 and duration > 0 then
 					local link = GetContainerItemLink(bag, slot)
 					local _,_,name = link:find("%|h%[(.-)%]%|h")
 					local icon = GetContainerItemInfo(bag, slot)
-					for k,v in pairs(self.itemsub) do
-						if name:find(k) then
-							name = v
+					for old,new in pairs(substitute) do
+						if name:find(old) then
+							name = new
 						end
 					end
 					startBar(name, start, duration, icon)
@@ -453,84 +482,17 @@ function Heatsink:ScanItems()
 		end
 	end
 	if db.show.items then
-		for _, slotName in pairs(Heatsink.slots) do
-			local slot = GetInventorySlotInfo(slotName)
+		for slot in pairs(slots) do
 			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
 			if enabled == 1 and duration > 0 then
 				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
 				if duration > db.min and duration <= db.max then
 					local icon = GetInventoryItemTexture("player", slot)
-					startBar(name, start, duration, icon, true)
+					startBar(name, start, duration, icon)
 				end
 			end
 		end
 	end
 end
 
-function Heatsink:ScanPlayer()
-	self.player = self.player or {}
-	wipe(self.player)
-	local id
-	for i = 1, GetNumSpellTabs() do
-		local tab, texture, offset, numSpells = GetSpellTabInfo(i)
-		for j = 1, numSpells do
-			id = j + offset
-			local name, rank, icon = GetSpellInfo(id, BOOKTYPE_SPELL)
-			for f in pairs(self.notooltip) do
-				if name == f then
-					self.player[name] = {
-						id = id,
-						icon = icon,
-					}
-				end
-			end
-			if not self.player[name] then
-				self.tooltip:SetSpell(id, BOOKTYPE_SPELL)
-				for i = 1, Heatsink.tooltip:NumLines() do
-					local line = Heatsink.tooltip.R[i]
-					if line and line:find(L["cooldown$"]) then
-						self.player[name] = {
-							id = id,
-							icon = icon,
-						}
-						if self.school[class] and self.player[name] then
-							local school = self.school[class][name]
-							if school then
-								self.player[name].schoolname = school
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-	self:SPELL_UPDATE_COOLDOWN()
-end
-
-function Heatsink:ScanPet()
-	self.pet = self.pet or {}
-	wipe(self.pet)
-	local id = 1
-	local previous
-	local name, rank, icon = GetSpellInfo(id, BOOKTYPE_PET)
-	while name do
-		if name ~= previous then
-			self.tooltip:SetSpell(id, BOOKTYPE_PET)
-			for i = 1, self.tooltip:NumLines() do
-				local line = self.tooltip.R[i] or ""
-				if line:find(L["cooldown$"]) then
-					self.pet[name] = {
-						id = id,
-						icon = icon,
-					}
-				break
-				end
-			end
-		end
-		id = id + 1
-		previous = name
-		name, rank, icon = GetSpellInfo(id, BOOKTYPE_PET)
-	end
-	self:PET_BAR_UPDATE_COOLDOWN()
-end
 

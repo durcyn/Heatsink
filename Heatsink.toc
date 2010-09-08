@@ -27,5 +27,3 @@ libs\LibInternalCooldowns-1.0\lib.xml
 Locale.lua
 Heatsink.lua
 Config.lua
-Data.lua
-TinyGratuity.lua
