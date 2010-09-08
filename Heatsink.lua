@@ -453,7 +453,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 			if enabled then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(name, start, duration, icon)
-				tremove(delay, spell)
+				tremove(delay, index)
 			end
 		end
 	end
