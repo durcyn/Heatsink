@@ -7,9 +7,9 @@ local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale("Heatsink")
 local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
-local anchor, db, class, last
-
-local GCD = 1.5
+local anchor, db, class
+local delay = {}
+local last
 
 local CreateFrame = _G.CreateFrame
 local GameFontNormal = _G.GameFontNormal
@@ -36,6 +36,7 @@ local format = _G.string.format
 local find = _G.string.find
 local random = _G.math.random
 local tinsert = _G.table.insert
+local tremove = _G.table.remove
 local tsort = _G.table.sort
 
 local defaults = {
@@ -440,16 +441,26 @@ end
 
 function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells and last then
-		local start, duration = GetSpellCooldown(last)
-		if duration and duration > GCD then
+		local start, duration, enabled = GetSpellCooldown(last)
+		if enabled then
 			local name, rank, icon = GetSpellInfo(last)
 			startBar(name, start, duration, icon)
+		else
+			tinsert(delay, last)
+		end
+		for index, spell in pairs(delay) do
+			local start, duration, enabled = GetSpellCooldown(spell)
+			if enabled then
+				local name, rank, icon = GetSpellInfo(spell)
+				startBar(name, start, duration, icon)
+				tremove(delay, spell)
+			end
 		end
 	end
 
 	for spell in pairs(force) do
-		local start, duration = GetSpellCooldown(spell)
-		if duration and duration > GCD then
+		local start, duration, enabled = GetSpellCooldown(spell)
+		if enabled then
 			local name, rank, icon = GetSpellInfo(spell)
 			startBar(name, start, duration, icon)
 		end
@@ -457,8 +468,8 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 
 	if school[class] then
 		for school, spell in pairs(school[class]) do
-			local start, duration = GetSpellCooldown(school)
-			if duration and duration > GCD then
+			local start, duration, enabled = GetSpellCooldown(school)
+			if enabled then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(school, start, duration, icon)
 			end
