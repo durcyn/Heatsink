@@ -123,7 +123,7 @@ local school = {
 		[FROST]  = (GetSpellInfo(116)), -- 116 Frostbolt
 	},
 	["DRUID"] = {
-		[ARCANE] = (GetSpellInfo(5185)), -- XXXX Moonfire?
+		[ARCANE] = (GetSpellInfo(8921)), -- 8921 Moonfire
 		[NATURE] = (GetSpellInfo(5185)), -- 5185 Healing Touch
 	},
 	["SHAMAN"] = {
