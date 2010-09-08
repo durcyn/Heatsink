@@ -9,7 +9,8 @@ local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local anchor, db, class
 local delay = {}
-local last
+local player
+local pet
 
 local CreateFrame = _G.CreateFrame
 local GameFontNormal = _G.GameFontNormal
@@ -378,6 +379,7 @@ function Heatsink:OnEnable()
 
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+	self:RegisterEvent("PET_BAR_UPDATE_COOLDOWN")
 
 	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5, "ScanItems")
 	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5,"ScanItems")
@@ -432,21 +434,23 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 end
 
 function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
-	if (unit == "player" or unit == "pet") then
-		if db.show.spells then
-			last = spell
+	if db.show.spells then
+		if unit == "player" then
+			player = spell
+		elseif unit =="pet" then
+			pet = spell
 		end
 	end
 end
 
 function Heatsink:SPELL_UPDATE_COOLDOWN()
-	if db.show.spells and last then
-		local start, duration, enabled = GetSpellCooldown(last)
+	if db.show.spells and player then
+		local start, duration, enabled = GetSpellCooldown(player)
 		if enabled then
-			local name, rank, icon = GetSpellInfo(last)
+			local name, rank, icon = GetSpellInfo(player)
 			startBar(name, start, duration, icon)
 		else
-			tinsert(delay, last)
+			tinsert(delay, player)
 		end
 		for index, spell in pairs(delay) do
 			local start, duration, enabled = GetSpellCooldown(spell)
@@ -473,6 +477,16 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(school, start, duration, icon)
 			end
+		end
+	end
+end
+
+function Heatsink:PET_BAR_UPDATE_COOLDOWN()
+	if db.show.spells and pet then
+		local start, duration, enabled = GetSpellCooldown(pet)
+		if enabled then
+			local name, rank, icon = GetSpellInfo(pet)
+			startBar(name, start, duration, icon)
 		end
 	end
 end
