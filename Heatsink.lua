@@ -12,6 +12,8 @@ local delay = {}
 local player
 local pet
 
+local RUNECD = 10
+
 local CreateFrame = _G.CreateFrame
 local GameFontNormal = _G.GameFontNormal
 local GetContainerItemCooldown = _G.GetContainerItemCooldown
@@ -114,7 +116,7 @@ local HOLY = L["%s School"]:format(_G.STRING_SCHOOL_HOLY)
 local NATURE = L["%s School"]:format(_G.STRING_SCHOOL_NATURE)
 local ARCANE = L["%s School"]:format(_G.STRING_SCHOOL_ARCANE)
 
-local school = {
+local schools = {
 	["WARLOCK"] = {
 		[SHADOW] = (GetSpellInfo(686)), -- 686 Shadow Bolt 
 		[FIRE]   = (GetSpellInfo(348)), -- 348 Immolate
@@ -144,6 +146,16 @@ local school = {
 
 local force = {
 	[(GetSpellInfo(20608))] = true, -- 20608 Reincarnation
+}
+
+local runewhitelist = { 
+	[(GetSpellInfo(47528))] = true, -- 47528 Mind Freeze
+} 
+
+local resets = {
+	[(GetSpellInfo(11958))] = true, -- 11958 Cold Snap
+	[(GetSpellInfo(14185))] = true, -- 14185 Preparation
+	[(GetSpellInfo(23989))] = true, -- 23989 Readiness
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -238,11 +250,10 @@ do
 	end
 	
 	function startBar(text, start, duration, icon)
-		if duration >= db.min and duration <= db.max then
-			stopBar(text)
+		if not getBar(text) and (duration >= db.min and duration <= db.max) then
 			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
 			bar:Set("anchor", anchor)
-			anchor.active[bar] = true
+			anchor.active[bar] = duration
 			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
 			bar:SetColor(unpack(db.color.bar))
 			bar.candyBarLabel:SetJustifyH(db.justify)
@@ -261,7 +272,7 @@ do
 	
 	function runTest(anchor)
 		local duration = random(5, 20)
-		startBar(L["Test"], nil, duration)
+		startBar("Hourglass "..duration, nil, duration, "test")
 	end
 	
 	function toggleAnchor(anchor)
@@ -381,6 +392,9 @@ function Heatsink:OnEnable()
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:RegisterEvent("PET_BAR_UPDATE_COOLDOWN")
 
+	self:RegisterEvent("UNIT_SPELLCAST_FAILED", 0.5, "Lockout")
+	self:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED", 0.5, "Lockout")
+
 	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5, "ScanItems")
 	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5,"ScanItems")
 
@@ -433,10 +447,33 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 	end
 end
 
+function Heatsink:Lockout(callback, unit, spell)
+	if unit == "player" then
+		if class and schools[class] then
+			for school, spell in pairs(schools[class]) do
+				local start, duration, enabled = GetSpellCooldown(school)
+				if enabled == 1 then
+					local name, rank, icon = GetSpellInfo(spell)
+					startBar(school, start, duration, icon)
+				end
+			end
+		end
+	end
+end
+
 function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	if db.show.spells then
 		if unit == "player" then
 			player = spell
+			if (resets[spell]) then
+				for bar, max in pairs(anchor.active) do
+					local text = bar.candyBarLabel:GetText()
+					local start, duration, enabled = GetSpellCooldown(text)
+					if duration <= 1.5 and max > 1.5 then
+						stopBar(text)
+					end
+				end
+			end
 		elseif unit =="pet" then
 			pet = spell
 		end
@@ -444,39 +481,33 @@ function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 end
 
 function Heatsink:SPELL_UPDATE_COOLDOWN()
-	if db.show.spells and player then
-		local start, duration, enabled = GetSpellCooldown(player)
-		if enabled then
-			local name, rank, icon = GetSpellInfo(player)
-			startBar(name, start, duration, icon)
-		else
-			tinsert(delay, player)
-		end
+	if db.show.spells then
 		for index, spell in pairs(delay) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if enabled then
+			if enabled == 1 then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(name, start, duration, icon)
 				tremove(delay, index)
+			end
+		end
+		if player then
+			local start, duration, enabled = GetSpellCooldown(player)
+			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[player] then enabled = 0 end
+			if enabled == 1 then
+				local name, rank, icon = GetSpellInfo(player)
+				startBar(name, start, duration, icon)
+				player = nil
+			else
+			tinsert(delay, player)
 			end
 		end
 	end
 
 	for spell in pairs(force) do
 		local start, duration, enabled = GetSpellCooldown(spell)
-		if enabled then
+		if enabled == 1 then
 			local name, rank, icon = GetSpellInfo(spell)
 			startBar(name, start, duration, icon)
-		end
-	end
-
-	if school[class] then
-		for school, spell in pairs(school[class]) do
-			local start, duration, enabled = GetSpellCooldown(school)
-			if enabled then
-				local name, rank, icon = GetSpellInfo(spell)
-				startBar(school, start, duration, icon)
-			end
 		end
 	end
 end
@@ -484,9 +515,10 @@ end
 function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 	if db.show.spells and pet then
 		local start, duration, enabled = GetSpellCooldown(pet)
-		if enabled then
+		if enabled == 1 then
 			local name, rank, icon = GetSpellInfo(pet)
 			startBar(name, start, duration, icon)
+			pet = nil
 		end
 	end
 end
@@ -497,7 +529,7 @@ function Heatsink:ScanItems()
 			local bagslots = GetContainerNumSlots(bag)
 			for slot = 1, bagslots do
 				local start, duration, enabled = GetContainerItemCooldown(bag,slot)
-				if enabled == 1 and duration > 0 then
+				if enabled == 1 then
 					local link = GetContainerItemLink(bag, slot)
 					local _,_,name = link:find("%|h%[(.-)%]%|h")
 					local icon = GetContainerItemInfo(bag, slot)
@@ -514,7 +546,7 @@ function Heatsink:ScanItems()
 	if db.show.items then
 		for slot in pairs(slots) do
 			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
-			if enabled == 1 and duration > 0 then
+			if enabled == 1 then
 				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
 				if duration > db.min and duration <= db.max then
 					local icon = GetInventoryItemTexture("player", slot)
