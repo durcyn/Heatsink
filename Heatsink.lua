@@ -77,12 +77,25 @@ local defaults = {
 }
 
 local slots = {	
+		[(GetInventorySlotInfo("HeadSlot"))] = true, -- Engineering Mind Control stuff
+		[(GetInventorySlotInfo("NeckSlot"))] = true, -- Black Templte exalted quest neck, what else?
+--		[(GetInventorySlotInfo("ShoulderSlot"))] = true,
+		[(GetInventorySlotInfo("BackSlot"))] = true, -- Engineering parachutes
+--		[(GetInventorySlotInfo("ChestSlot"))] = true,
+--		[(GetInventorySlotInfo("ShirtSlot"))] = true,
+		[(GetInventorySlotInfo("TabardSlot"))] = true, -- Argent Crusade teleporter
+--		[(GetInventorySlotInfo("WristSlot"))] = true,
+		[(GetInventorySlotInfo("HandsSlot"))] = true, -- Engineering Rockets
+--		[(GetInventorySlotInfo("WaistSlot"))] = true,
+--		[(GetInventorySlotInfo("LegsSlot"))] = true,
+		[(GetInventorySlotInfo("FeetSlot"))] = true, -- Engineering Rocket Boots
+		[(GetInventorySlotInfo("Finger0Slot"))] = true, -- Kirin Tor rings, et al
+		[(GetInventorySlotInfo("Finger1Slot"))] = true,
 		[(GetInventorySlotInfo("Trinket0Slot"))] = true, 
 		[(GetInventorySlotInfo("Trinket1Slot"))] = true,
-		[(GetInventorySlotInfo("Finger0Slot"))] = true,
-		[(GetInventorySlotInfo("Finger1Slot"))] = true,
-		[(GetInventorySlotInfo("TabardSlot"))] = true,
-		[(GetInventorySlotInfo("HeadSlot"))] = true,
+--		[(GetInventorySlotInfo("MainHandSlot"))] = true,
+--		[(GetInventorySlotInfo("SecondaryHandSlot"))] = true,
+--		[(GetInventorySlotInfo("RangedSlot"))] = true,
 	}
 
 local substitute = {
