@@ -416,7 +416,7 @@ function Heatsink:OnEnable()
 
 	if class == "SHAMAN" then
 		self:SecureHook("UseSoulstone", function()
-			force = (GetSpellInfo(20608))
+			force = (GetSpellInfo(20608)) -- 20608 Reincarnation
 		end)
 	end
 end
