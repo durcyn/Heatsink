@@ -11,6 +11,7 @@ local anchor, db, class
 local delay = {}
 local player
 local pet
+local force
 
 local RUNECD = 10
 
@@ -155,10 +156,6 @@ local schools = {
 	["PALADIN"] = {
 		[HOLY] = (GetSpellInfo(635)), -- 635 Holy Light
 	},
-}
-
-local force = {
-	[(GetSpellInfo(20608))] = true, -- 20608 Reincarnation
 }
 
 local runewhitelist = { 
@@ -405,21 +402,28 @@ function Heatsink:OnEnable()
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:RegisterEvent("PET_BAR_UPDATE_COOLDOWN")
 
-	self:RegisterEvent("UNIT_SPELLCAST_FAILED", 0.5, "Lockout")
-	self:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED", 0.5, "Lockout")
+	self:RegisterBucketEvent("UNIT_SPELLCAST_FAILED", 0.5, "Lockout")
+	self:RegisterBucketEvent("UNIT_SPELLCAST_INTERRUPTED", 0.5, "Lockout")
 
-	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5, "ScanItems")
-	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5,"ScanItems")
+	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5, "ScanEquipped")
+	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5,"ScanBags")
 
 	icd.RegisterCallback(self, "InternalCooldowns_Proc")
 	candy.RegisterCallback(self, "LibCandyBar_Stop")
 
-	self:ScanItems()
+	self:ScanEquipped()
+	self:ScanBags()
+
+	if class == "SHAMAN" then
+		self:SecureHook("UseSoulstone", function()
+			force = (GetSpellInfo(20608))
+		end)
+	end
 end
 
 function Heatsink:OnDisable()
 	self:UnregisterAllEvents()
-
+	self:UnhookAll()
 	icd.UnregisterCallback(self, "InternalCooldowns_Proc")
 	candy.UnregisterCallback(self, "LibCandyBar_Stop")
 end
@@ -511,16 +515,17 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 				startBar(name, start, duration, icon)
 				player = nil
 			else
-			tinsert(delay, player)
+				tinsert(delay, player)
 			end
 		end
 	end
 
-	for spell in pairs(force) do
-		local start, duration, enabled = GetSpellCooldown(spell)
+	if force then
+		local start, duration, enabled = GetSpellCooldown(force)
 		if enabled == 1 then
 			local name, rank, icon = GetSpellInfo(spell)
 			startBar(name, start, duration, icon)
+			force = nil
 		end
 	end
 end
@@ -536,7 +541,7 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 	end
 end
 
-function Heatsink:ScanItems()
+function Heatsink:ScanEquipped()
 	if db.show.inventory then
 		for bag = 0,4 do
 			local bagslots = GetContainerNumSlots(bag)
@@ -556,6 +561,9 @@ function Heatsink:ScanItems()
 			end
 		end
 	end
+end
+
+function Heatsink:ScanBags()
 	if db.show.items then
 		for slot in pairs(slots) do
 			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
