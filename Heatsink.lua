@@ -669,7 +669,7 @@ function Heatsink:OnEnable()
 	class = english
 	if class == "SHAMAN" then
 		self:SecureHook("UseSoulstone", function()
-			force = (GetSpellInfo(20608)) -- 20608 Reincarnation
+			force = 20608 -- 20608 Reincarnation
 		end)
 	end
 end
@@ -762,21 +762,21 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		end
 		if player then
 			local start, duration, enabled = GetSpellCooldown(player)
-			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[player] then enabled = 0 end
+			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[player] then enabled = -1 end
 			if enabled == 1 then
 				local name, rank, icon = GetSpellInfo(player)
 				startBar(name, start, duration, icon)
 				player = nil
-			else
+			elseif enabled == 0 and duration > 0 then
 				tinsert(delay, player)
 			end
 		end
 	end
 
 	if force then
-		local start, duration, enabled = GetSpellCooldown(force)
+		local name, rank, icon = GetSpellInfo(force)
+		local start, duration, enabled = GetSpellCooldown(name)
 		if enabled == 1 then
-			local name, rank, icon = GetSpellInfo(force)
 			startBar(name, start, duration, icon)
 			force = nil
 		end
