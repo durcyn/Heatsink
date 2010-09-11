@@ -379,7 +379,7 @@ local defaults = {
 			school = true,
 			spells = true,
 			pet = true,
-			items = true,
+			equipped = true,
 			inventory = true,
 			proc = true,
 		},
@@ -605,9 +605,9 @@ local options = {
 					type = "toggle",
 					name = L["Equipped items"],
 					desc = L["Toggle showing equipped items cooldowns"],
-					get = function () return Heatsink.db.profile.show.items end,
+					get = function () return Heatsink.db.profile.show.equipped end,
 					set = function (info, v)
-						Heatsink.db.profile.show.items = v
+						Heatsink.db.profile.show.equipped = v
 						Heatsink:ScanItems()
 					end,
 					order = 30,
@@ -664,6 +664,9 @@ function Heatsink:OnEnable()
 
 	icd.RegisterCallback(self, "InternalCooldowns_Proc")
 	candy.RegisterCallback(self, "LibCandyBar_Stop")
+
+	self:UNIT_INVENTORY_CHANGED()
+	self:BAG_UPDATE_COOLDOWN()
 
 	local unused, english = UnitClass("player")
 	class = english
@@ -794,8 +797,23 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 	end
 end
 
-function Heatsink:UNIT_INVENTORY_CHANGED(callback, unit)
-	if db.show.inventory and unit == "player" then
+function Heatsink:UNIT_INVENTORY_CHANGED()
+	if db.show.equipped then
+		for slot in pairs(slots) do
+			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
+			if enabled == 1 then
+				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
+				if duration > db.min and duration <= db.max then
+					local icon = GetInventoryItemTexture("player", slot)
+					startBar(name, start, duration, icon)
+				end
+			end
+		end
+	end
+end
+
+function Heatsink:BAG_UPDATE_COOLDOWN()
+	if db.show.inventory then
 		for bag = 0,4 do
 			local bagslots = GetContainerNumSlots(bag)
 			for slot = 1, bagslots do
@@ -815,20 +833,3 @@ function Heatsink:UNIT_INVENTORY_CHANGED(callback, unit)
 		end
 	end
 end
-
-function Heatsink:BAG_UPDATE_COOLDOWN()
-	if db.show.items then
-		for slot in pairs(slots) do
-			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
-			if enabled == 1 then
-				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
-				if duration > db.min and duration <= db.max then
-					local icon = GetInventoryItemTexture("player", slot)
-					startBar(name, start, duration, icon)
-				end
-			end
-		end
-	end
-end
-
-
