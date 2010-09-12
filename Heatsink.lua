@@ -608,7 +608,7 @@ local options = {
 					get = function () return Heatsink.db.profile.show.equipped end,
 					set = function (info, v)
 						Heatsink.db.profile.show.equipped = v
-						Heatsink:ScanItems()
+						Heatsink:UNIT_INVENTORY_CHANGED()
 					end,
 					order = 30,
 				},
@@ -619,7 +619,7 @@ local options = {
 					get = function () return Heatsink.db.profile.show.inventory end,
 					set = function (info, v)
 						Heatsink.db.profile.show.inventory = v
-						Heatsink:ScanItems()
+						Heatsink:BAG_UPDATE_COOLDOWN()
 					end,
 					order = 40,
 				},
