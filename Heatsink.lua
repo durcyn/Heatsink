@@ -813,6 +813,7 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 end
 
 function Heatsink:BAG_UPDATE_COOLDOWN()
+	self:UNIT_INVENTORY_CHANGED()
 	if db.show.inventory then
 		for bag = 0,4 do
 			local bagslots = GetContainerNumSlots(bag)
