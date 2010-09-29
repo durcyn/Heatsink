@@ -742,7 +742,7 @@ function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 				for bar, max in pairs(anchor.active) do
 					local text = bar.candyBarLabel:GetText()
 					local start, duration, enabled = GetSpellCooldown(text)
-					if duration <= 1.5 and max > 1.5 then
+					if duration and duration <= 1.5 and max > 1.5 then
 						stopBar(text)
 					end
 				end
@@ -834,3 +834,4 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 		end
 	end
 end
+
