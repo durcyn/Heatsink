@@ -136,6 +136,10 @@ local resets = {
 	[(GetSpellInfo(23989))] = true, -- 23989 Readiness
 }
 
+local chains = {
+	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
+}
+
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
 local createAnchor, toggleAnchor, updateAnchor, runTest, startBar, stopBar
 do
@@ -738,6 +742,9 @@ function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	if db.show.spells then
 		if unit == "player" then
 			player = spell
+			if (chains[spell]) then
+				tinsert(delay, (chains[spell]))
+			end
 			if (resets[spell]) then
 				for bar, max in pairs(anchor.active) do
 					local text = bar.candyBarLabel:GetText()
