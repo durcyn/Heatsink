@@ -138,6 +138,7 @@ local resets = {
 
 local chains = {
 	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
+	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
