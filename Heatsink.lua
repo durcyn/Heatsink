@@ -11,7 +11,7 @@ local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
 
 local RUNECD = 10
 
-local anchor, db, class
+local anchor, db, class, guid
 local delay = {}
 local player
 local pet
@@ -32,6 +32,7 @@ local GetSpellCooldown = _G.GetSpellCooldown
 local GetSpellInfo = _G.GetSpellInfo
 local GetTime = _G.GetTime
 local UnitClass = _G.UnitClass
+local UnitGUID = _G.UnitGUID
 local ipairs = _G.ipairs
 local pairs = _G.pairs
 local unpack = _G.unpack
@@ -233,7 +234,7 @@ do
 	end
 	
 	function startBar(text, start, duration, icon)
-		if not getBar(text) and (duration >= db.min and duration <= db.max) then
+		if (duration >= db.min and duration <= db.max) then
 			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
 			bar:Set("anchor", anchor)
 			anchor.active[bar] = duration
@@ -660,9 +661,7 @@ function Heatsink:OnEnable()
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:RegisterEvent("PET_BAR_UPDATE_COOLDOWN")
-
-	self:RegisterBucketEvent("UNIT_SPELLCAST_FAILED", 0.5, "Lockout")
-	self:RegisterBucketEvent("UNIT_SPELLCAST_INTERRUPTED", 0.5, "Lockout")
+	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
 	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5)
 	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5)
@@ -673,6 +672,7 @@ function Heatsink:OnEnable()
 	self:UNIT_INVENTORY_CHANGED()
 	self:BAG_UPDATE_COOLDOWN()
 
+	guid = UnitGUID("player")
 	local unused, english = UnitClass("player")
 	class = english
 	if class == "SHAMAN" then
@@ -725,8 +725,8 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 	end
 end
 
-function Heatsink:Lockout(callback, unit, spell)
-	if unit == "player" then
+function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, subevent, srcGUID, src, srcFlags, dstGUID, dst, dstFlags, spellID, spell, spellSchool, extraID, extra, extraSchool, auratype)
+	if subevent == "SPELL_INTERRUPT" and dstGUID == guid then
 		if class and schools[class] then
 			for school, spell in pairs(schools[class]) do
 				local start, duration, enabled = GetSpellCooldown(school)
@@ -743,15 +743,19 @@ function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	if db.show.spells then
 		if unit == "player" then
 			player = spell
-			if (chains[spell]) then
-				tinsert(delay, (chains[spell]))
+			for k,v in pairs(chains) do
+				if k == spell then
+					tinsert(delay, v)
+				end
 			end
-			if (resets[spell]) then
-				for bar, max in pairs(anchor.active) do
-					local text = bar.candyBarLabel:GetText()
-					local start, duration, enabled = GetSpellCooldown(text)
-					if duration and duration <= 1.5 and max > 1.5 then
-						stopBar(text)
+			for k,v in pairs(resets) do
+				if k == spell then
+					for bar, max in pairs(anchor.active) do
+						local text = bar.candyBarLabel:GetText()
+						local start, duration, enabled = GetSpellCooldown(text)
+						if duration and duration <= 1.5 and max > 1.5 then
+							stopBar(text)
+						end
 					end
 				end
 			end
@@ -783,13 +787,21 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 			end
 		end
 	end
-
 	if force then
 		local name, rank, icon = GetSpellInfo(force)
 		local start, duration, enabled = GetSpellCooldown(name)
 		if enabled == 1 then
 			startBar(name, start, duration, icon)
 			force = nil
+		end
+	end
+	for bar in pairs(anchor.active) do
+		local name = bar.candyBarLabel:GetText() or nil
+		if name then
+			local start, duration, enabled = GetSpellCooldown(name)
+			if enabled == 0 then
+				stopBar(name)
+			end
 		end
 	end
 end
