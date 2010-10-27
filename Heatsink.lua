@@ -214,7 +214,7 @@ do
 		local bar
 		for k in pairs(anchor.active) do
 			if k.candyBarLabel:GetText() == text then
-				bar = true
+				bar = k
 				break
 			end
 		end
@@ -234,24 +234,27 @@ do
 	end
 	
 	function startBar(text, start, duration, icon)
-		if (duration >= db.min and duration <= db.max) then
-			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
-			bar:Set("anchor", anchor)
-			anchor.active[bar] = duration
-			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
-			bar:SetColor(unpack(db.color.bar))
-			bar.candyBarLabel:SetJustifyH(db.justify)
-			bar.candyBarLabel:SetTextColor(unpack(db.color.text))
-			bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
-			bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
-			bar:SetLabel(text)
-			bar:SetDuration(start and (duration-(GetTime()-start)) or duration)
-			bar:SetTimeVisibility(true)
-			bar:SetIcon(icon)
-			bar:SetScale(db.scale)
-			bar:Start()
+		local bar = getBar(text)
+			if bar then
+				bar:SetDuration(start and (duration-(GetTime()-start)) or duration)
+			elseif (duration >= db.min and duration <= db.max) then
+				local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
+				bar:Set("anchor", anchor)
+				anchor.active[bar] = duration
+				bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
+				bar:SetColor(unpack(db.color.bar))
+				bar.candyBarLabel:SetJustifyH(db.justify)
+				bar.candyBarLabel:SetTextColor(unpack(db.color.text))
+				bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
+				bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
+				bar:SetLabel(text)
+				bar:SetDuration(start and (duration-(GetTime()-start)) or duration)
+				bar:SetTimeVisibility(true)
+				bar:SetIcon(icon)
+				bar:SetScale(db.scale)
+				bar:Start()
+			end
 			rearrangeBars(anchor)
-		end
 	end
 	
 	function runTest(anchor)
