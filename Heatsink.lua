@@ -238,7 +238,7 @@ do
 		if getBar(text) then
 			for k in pairs(anchor.active) do
 				if k.candyBarLabel:GetText() == text then
-					bar:SetDuration(start and (duration-(GetTime()-start)) or duration)
+					k:SetDuration(start and (duration-(GetTime()-start)) or duration)
 				end
 			end
 		elseif (duration >= db.min and duration <= db.max) then
