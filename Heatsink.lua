@@ -13,6 +13,7 @@ local RUNECD = 10
 
 local anchor, db, class, guid
 local delay = {}
+Heatsink.delay = delay
 local player
 local pet
 local force
@@ -214,7 +215,7 @@ do
 		local bar
 		for k in pairs(anchor.active) do
 			if k.candyBarLabel:GetText() == text then
-				bar = k
+				bar = true
 				break
 			end
 		end
@@ -234,32 +235,35 @@ do
 	end
 	
 	function startBar(text, start, duration, icon)
-		local bar = getBar(text)
-			if bar then
-				bar:SetDuration(start and (duration-(GetTime()-start)) or duration)
-			elseif (duration >= db.min and duration <= db.max) then
-				local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
-				bar:Set("anchor", anchor)
-				anchor.active[bar] = duration
-				bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
-				bar:SetColor(unpack(db.color.bar))
-				bar.candyBarLabel:SetJustifyH(db.justify)
-				bar.candyBarLabel:SetTextColor(unpack(db.color.text))
-				bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
-				bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
-				bar:SetLabel(text)
-				bar:SetDuration(start and (duration-(GetTime()-start)) or duration)
-				bar:SetTimeVisibility(true)
-				bar:SetIcon(icon)
-				bar:SetScale(db.scale)
-				bar:Start()
+		if getBar(text) then
+			for k in pairs(anchor.active) do
+				if k.candyBarLabel:GetText() == text then
+					bar:SetDuration(start and (duration-(GetTime()-start)) or duration)
+				end
 			end
+		elseif (duration >= db.min and duration <= db.max) then
+			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
+			bar:Set("anchor", anchor)
+			anchor.active[bar] = duration
+			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
+			bar:SetColor(unpack(db.color.bar))
+			bar.candyBarLabel:SetJustifyH(db.justify)
+			bar.candyBarLabel:SetTextColor(unpack(db.color.text))
+			bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
+			bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
+			bar:SetLabel(text)
+			bar:SetDuration(start and (duration-(GetTime()-start)) or duration)
+			bar:SetTimeVisibility(true)
+			bar:SetIcon(icon)
+			bar:SetScale(db.scale)
+			bar:Start()
 			rearrangeBars(anchor)
+		end
 	end
 	
 	function runTest(anchor)
 		local duration = random(5, 20)
-		startBar("Hourglass "..duration, nil, duration, "test")
+		startBar("Heatsink "..duration, nil, duration, "test")
 	end
 	
 	function toggleAnchor(anchor)
@@ -730,7 +734,7 @@ end
 
 function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, subevent, srcGUID, src, srcFlags, dstGUID, dst, dstFlags, spellID, spell, spellSchool, extraID, extra, extraSchool, auratype)
 	if subevent == "SPELL_INTERRUPT" and dstGUID == guid then
-		if class and schools[class] then
+   		if class and schools[class] then
 			for school, spell in pairs(schools[class]) do
 				local start, duration, enabled = GetSpellCooldown(school)
 				if enabled == 1 then
@@ -741,6 +745,7 @@ function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, subevent, src
 		end
 	end
 end
+
 
 function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	if db.show.spells then
