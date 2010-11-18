@@ -144,7 +144,7 @@ local chains = {
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
-local createAnchor, toggleAnchor, updateAnchor, runTest, startBar, stopBar
+local createAnchor, toggleAnchor, updateAnchor, runTest, startBar, stopBar, getBar
 do
 	local GameTooltip = _G.GameTooltip
 
@@ -211,7 +211,7 @@ do
 		GameTooltip:Hide()
 	end
 	
-	local function getBar(text)
+	function getBar(text)
 		local bar
 		for k in pairs(anchor.active) do
 			if k.candyBarLabel:GetText() == text then
@@ -234,36 +234,28 @@ do
 		return bar
 	end
 	
-	function startBar(text, start, duration, icon)
-		if getBar(text) then
-			for k in pairs(anchor.active) do
-				if k.candyBarLabel:GetText() == text then
-					k:SetDuration(start and (duration-(GetTime()-start)) or duration)
-				end
-			end
-		elseif (duration >= db.min and duration <= db.max) then
-			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
-			bar:Set("anchor", anchor)
-			anchor.active[bar] = duration
-			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
-			bar:SetColor(unpack(db.color.bar))
-			bar.candyBarLabel:SetJustifyH(db.justify)
-			bar.candyBarLabel:SetTextColor(unpack(db.color.text))
-			bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
-			bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
-			bar:SetLabel(text)
-			bar:SetDuration(start and (duration-(GetTime()-start)) or duration)
-			bar:SetTimeVisibility(true)
-			bar:SetIcon(icon)
-			bar:SetScale(db.scale)
-			bar:Start()
-			rearrangeBars(anchor)
-		end
+	function startBar(text, duration, icon)
+		local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
+		bar:Set("anchor", anchor)
+		anchor.active[bar] = duration
+		bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
+		bar:SetColor(unpack(db.color.bar))
+		bar.candyBarLabel:SetJustifyH(db.justify)
+		bar.candyBarLabel:SetTextColor(unpack(db.color.text))
+		bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
+		bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
+		bar:SetLabel(text)
+		bar:SetDuration(duration)
+		bar:SetTimeVisibility(true)
+		bar:SetIcon(icon)
+		bar:SetScale(db.scale)
+		bar:Start()
+		rearrangeBars(anchor)
 	end
 	
 	function runTest(anchor)
 		local duration = random(5, 20)
-		startBar("Heatsink "..duration, nil, duration, "test")
+		startBar("Heatsink "..duration, duration, "test")
 	end
 	
 	function toggleAnchor(anchor)
@@ -713,6 +705,22 @@ function Heatsink:UpdateAnchor()
 	updateAnchor(anchor)
 end
 
+function Heatsink:StartBar(category, text, start, duration, icon)
+	if getBar(text) then
+		if category == "SPELL" then
+			for bar in pairs(anchor.active) do
+				if bar.candyBarLabel:GetText() == text then
+					bar:SetDuration(duration)
+				end
+			end
+		end
+	else
+		if (duration >= db.min and duration <= db.max) then
+			startBar(text, duration, icon)
+		end
+	end
+end
+
 function Heatsink:LibCandyBar_Stop(callback, bar)
 	local a = bar:Get("anchor")
 	if a == anchor and anchor.active and anchor.active[bar] then
@@ -728,7 +736,7 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 		else
 			name, _, _, _, _, _, _, _, _, icon = GetItemInfo(item)
 		end
-		startBar(name, start, duration, icon)
+		self:StartBar("ICD", name, start, duration, icon)
 	end
 end
 
@@ -739,7 +747,7 @@ function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, subevent, src
 				local start, duration, enabled = GetSpellCooldown(school)
 				if enabled == 1 then
 					local name, rank, icon = GetSpellInfo(spell)
-					startBar(school, start, duration, icon)
+					self:StartBar("SCHOOL", school, start, duration, icon)
 				end
 			end
 		end
@@ -779,7 +787,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 			local start, duration, enabled = GetSpellCooldown(spell)
 			if enabled == 1 then
 				local name, rank, icon = GetSpellInfo(spell)
-				startBar(name, start, duration, icon)
+				self:StartBar("SPELL", name, start, duration, icon)
 				tremove(delay, index)
 			end
 		end
@@ -788,7 +796,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[player] then enabled = -1 end
 			if enabled == 1 then
 				local name, rank, icon = GetSpellInfo(player)
-				startBar(name, start, duration, icon)
+				self:StartBar("SPELL", name, start, duration, icon)
 				player = nil
 			elseif enabled == 0 and duration > 0 then
 				tinsert(delay, player)
@@ -799,7 +807,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		local name, rank, icon = GetSpellInfo(force)
 		local start, duration, enabled = GetSpellCooldown(name)
 		if enabled == 1 then
-			startBar(name, start, duration, icon)
+			self:StartBar("SPELL", name, start, duration, icon)
 			force = nil
 		end
 	end
@@ -819,7 +827,7 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 		local start, duration, enabled = GetSpellCooldown(pet)
 		if enabled == 1 then
 			local name, rank, icon = GetSpellInfo(pet)
-			startBar(name, start, duration, icon)
+			self:StartBar("PET", name, start, duration, icon)
 			pet = nil
 		end
 	end
@@ -833,7 +841,7 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
 				if duration > db.min and duration <= db.max then
 					local icon = GetInventoryItemTexture("player", slot)
-					startBar(name, start, duration, icon)
+					self:StartBar("ITEM", name, start, duration, icon)
 				end
 			end
 		end
@@ -856,7 +864,7 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 							name = new
 						end
 					end
-					startBar(name, start, duration, icon)
+					self:StartBar("ITEM", name, start, duration, icon)
 				end
 			end
 		end
