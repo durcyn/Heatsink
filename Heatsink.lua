@@ -11,7 +11,7 @@ local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
 
 local RUNECD = 10
 
-local anchor, db, class, guid
+local anchor, db, class
 local delay = {}
 Heatsink.delay = delay
 local player
@@ -658,9 +658,9 @@ end
 
 function Heatsink:OnEnable()
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+	self:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:RegisterEvent("PET_BAR_UPDATE_COOLDOWN")
-	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
 	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5)
 	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5)
@@ -671,7 +671,6 @@ function Heatsink:OnEnable()
 	self:UNIT_INVENTORY_CHANGED()
 	self:BAG_UPDATE_COOLDOWN()
 
-	guid = UnitGUID("player")
 	local unused, english = UnitClass("player")
 	class = english
 	if class == "SHAMAN" then
@@ -740,9 +739,9 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 	end
 end
 
-function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, subevent, srcGUID, src, srcFlags, dstGUID, dst, dstFlags, spellID, spell, spellSchool, extraID, extra, extraSchool, auratype)
-	if subevent == "SPELL_INTERRUPT" and dstGUID == guid then
-   		if class and schools[class] then
+function Heatsink:UNIT_SPELLCAST_INTERRUPTED(callback, unit, spell)
+	if unit == "player" then
+		if class and schools[class] then
 			for school, spell in pairs(schools[class]) do
 				local start, duration, enabled = GetSpellCooldown(school)
 				if enabled == 1 then
