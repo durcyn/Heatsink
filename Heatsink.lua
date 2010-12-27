@@ -18,6 +18,8 @@ local player
 local pet
 local force
 
+local faction
+
 local CreateFrame = _G.CreateFrame
 local GameFontNormal = _G.GameFontNormal
 local GetContainerItemCooldown = _G.GetContainerItemCooldown
@@ -141,6 +143,11 @@ local resets = {
 local chains = {
 	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
 	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
+}
+
+local buggy = {
+	[(GetSpellInfo(698))] = true, --  698 Ritual of Summoning
+	[(GetSpellInfo(29893))] = true, --  29893 Ritual of Souls
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -654,13 +661,18 @@ function Heatsink:OnInitialize()
 	local optFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Heatsink")
 	LibStub("AceConsole-3.0"):RegisterChatCommand( "heatsink", function() InterfaceOptionsFrame_OpenToCategory("Heatsink") end )
 	anchor = createAnchor("HeatsinkAnchor", "Heatsink")
+
+	local ufg = UnitFactionGroup("player")
+	faction = "Interface\\Addons\\Broker_PVPTimer\\icons\\"..ufg.."_active"
 end
 
 function Heatsink:OnEnable()
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-	self:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+	self:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:RegisterEvent("PET_BAR_UPDATE_COOLDOWN")
+	self:RegisterEvent("PLAYER_FLAGS_CHANGED")
 
 	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5)
 	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5)
@@ -739,8 +751,8 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 	end
 end
 
-function Heatsink:UNIT_SPELLCAST_INTERRUPTED(callback, unit, spell)
-	if unit == "player" then
+function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, combatEvent, _, sourceName, _, _, _, destFlags)
+	if combatEvent == "SPELL_INTERRUPT" and destFlags == 0x511 then
 		if class and schools[class] then
 			for school, spell in pairs(schools[class]) do
 				local start, duration, enabled = GetSpellCooldown(school)
@@ -753,10 +765,9 @@ function Heatsink:UNIT_SPELLCAST_INTERRUPTED(callback, unit, spell)
 	end
 end
 
-
 function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	if db.show.spells then
-		if unit == "player" then
+		if unit == "player" and not buggy[spell] then
 			player = spell
 			for k,v in pairs(chains) do
 				if k == spell then
@@ -780,7 +791,25 @@ function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	end
 end
 
+function Heatsink:UNIT_SPELLCAST_CHANNEL_STOP(callback, unit, spell)
+	if db.show.spells then
+		if unit == "player" and buggy[spell] then
+			player = spell
+		end
+	end
+end
+
 function Heatsink:SPELL_UPDATE_COOLDOWN()
+	for bar in pairs(anchor.active) do
+		local name = bar.candyBarLabel:GetText() or nil
+		if name then
+			local start, duration, enabled = GetSpellCooldown(name)
+			if enabled == 0 then
+				stopBar(name)
+				print("stopping "..name)
+			end
+		end
+	end
 	if db.show.spells then
 		for index, spell in pairs(delay) do
 			local start, duration, enabled = GetSpellCooldown(spell)
@@ -808,15 +837,6 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		if enabled == 1 then
 			self:StartBar("SPELL", name, start, duration, icon)
 			force = nil
-		end
-	end
-	for bar in pairs(anchor.active) do
-		local name = bar.candyBarLabel:GetText() or nil
-		if name then
-			local start, duration, enabled = GetSpellCooldown(name)
-			if enabled == 0 then
-				stopBar(name)
-			end
 		end
 	end
 end
@@ -870,3 +890,11 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 	end
 end
 
+function Heatsink:PLAYER_FLAGS_CHANGED(callback)
+	if IsPVPTimerRunning() then
+		local time = GetPVPTimer()	
+		self:StartBar("PVP", L["PVP Timer"], nil, time/1000, faction)
+	else
+		stopBar(L["PVP Timer"])
+	end
+end
