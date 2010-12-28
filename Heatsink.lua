@@ -761,7 +761,7 @@ function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, combatEvent, 
 		if class and schools[class] then
 			for school, spell in pairs(schools[class]) do
 				local start, duration, enabled = GetSpellCooldown(school)
-				if enabled == 1 then
+				if enabled == 1 and duration > db.min and duration < db.max then
 					local name, rank, icon = GetSpellInfo(spell)
 					startBar(school, duration, icon)
 				end
@@ -800,7 +800,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then
 		for index, spell in pairs(delay) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if enabled == 1 then
+			if enabled == 1 and duration > db.min and duration < db.max then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(name, duration, icon)
 				tremove(delay, index)
@@ -809,7 +809,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		if player then
 			local start, duration, enabled = GetSpellCooldown(player)
 			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[player] then enabled = -1 end
-			if enabled == 1 then
+			if enabled == 1 and duration > db.min and duration < db.max then
 				local name, rank, icon = GetSpellInfo(player)
 				startBar(name, duration, icon)
 				player = nil
@@ -836,7 +836,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if force then
 		local name, rank, icon = GetSpellInfo(force)
 		local start, duration, enabled = GetSpellCooldown(name)
-		if enabled == 1 then
+		if enabled == 1 and duration > db.min and duration < db.max then
 			startBar(name, duration, icon)
 			force = nil
 		end
@@ -846,7 +846,7 @@ end
 function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 	if db.show.spells and pet then
 		local start, duration, enabled = GetSpellCooldown(pet)
-		if enabled == 1 then
+		if enabled == 1 and duration > db.min and duration < db.max then
 			local name, rank, icon = GetSpellInfo(pet)
 			startBar(name, duration, icon)
 			pet = nil
@@ -858,9 +858,8 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 	if db.show.equipped then
 		for slot in pairs(slots) do
 			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
-			if enabled == 1 then
+			if enabled == 1 and duration > db.min and duration < db.max then
 				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
-				if duration > db.min and duration <= db.max then
 					local icon = GetInventoryItemTexture("player", slot)
 					startBar(name, duration, icon)
 				end
@@ -876,7 +875,7 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 			local bagslots = GetContainerNumSlots(bag)
 			for slot = 1, bagslots do
 				local start, duration, enabled = GetContainerItemCooldown(bag,slot)
-				if enabled == 1 then
+				if enabled == 1 and duration > db.min and duration < db.max then
 					local link = GetContainerItemLink(bag, slot)
 					local _,_,name = link:find("%|h%[(.-)%]%|h")
 					local icon = GetContainerItemInfo(bag, slot)
