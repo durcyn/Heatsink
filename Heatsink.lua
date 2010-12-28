@@ -145,9 +145,8 @@ local chains = {
 	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
 }
 
-local buggy = {
-	[(GetSpellInfo(698))] = true, --  698 Ritual of Summoning
-	[(GetSpellInfo(29893))] = true, --  29893 Ritual of Souls
+local incremental = {
+	[(GetSpellInfo(56972))] = true, -- 56972 Metamorphosis
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -242,21 +241,30 @@ do
 	end
 	
 	function startBar(text, duration, icon)
-		local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
-		bar:Set("anchor", anchor)
-		anchor.active[bar] = duration
-		bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
-		bar:SetColor(unpack(db.color.bar))
-		bar.candyBarLabel:SetJustifyH(db.justify)
-		bar.candyBarLabel:SetTextColor(unpack(db.color.text))
-		bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
-		bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
-		bar:SetLabel(text)
-		bar:SetDuration(duration)
-		bar:SetTimeVisibility(true)
-		bar:SetIcon(icon)
-		bar:SetScale(db.scale)
-		bar:Start()
+		local exists = false
+		for k in pairs(anchor.active) do
+			if k.candyBarLabel:GetText() == text then
+				k:SetDuration(duration)
+				exists = true
+			end
+		end
+		if not exists then 	
+			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
+			bar:Set("anchor", anchor)
+			anchor.active[bar] = duration
+			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
+			bar:SetColor(unpack(db.color.bar))
+			bar.candyBarLabel:SetJustifyH(db.justify)
+			bar.candyBarLabel:SetTextColor(unpack(db.color.text))
+			bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
+			bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
+			bar:SetLabel(text)
+			bar:SetDuration(duration)
+			bar:SetTimeVisibility(true)
+			bar:SetIcon(icon)
+			bar:SetScale(db.scale)
+			bar:Start()
+		end
 		rearrangeBars(anchor)
 	end
 	
@@ -668,7 +676,6 @@ end
 
 function Heatsink:OnEnable()
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-	self:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
 	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:RegisterEvent("PET_BAR_UPDATE_COOLDOWN")
@@ -716,22 +723,6 @@ function Heatsink:UpdateAnchor()
 	updateAnchor(anchor)
 end
 
-function Heatsink:StartBar(category, text, start, duration, icon)
-	if getBar(text) then
-		if category == "SPELL" then
-			for bar in pairs(anchor.active) do
-				if bar.candyBarLabel:GetText() == text then
-					bar:SetDuration(duration)
-				end
-			end
-		end
-	else
-		if (duration >= db.min and duration <= db.max) then
-			startBar(text, duration, icon)
-		end
-	end
-end
-
 function Heatsink:LibCandyBar_Stop(callback, bar)
 	local a = bar:Get("anchor")
 	if a == anchor and anchor.active and anchor.active[bar] then
@@ -747,7 +738,7 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 		else
 			name, _, _, _, _, _, _, _, _, icon = GetItemInfo(item)
 		end
-		self:StartBar("ICD", name, start, duration, icon)
+		startBar(name, duration, icon)
 	end
 end
 
@@ -758,7 +749,7 @@ function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, combatEvent, 
 				local start, duration, enabled = GetSpellCooldown(school)
 				if enabled == 1 then
 					local name, rank, icon = GetSpellInfo(spell)
-					self:StartBar("SCHOOL", school, start, duration, icon)
+					startBar(school, duration, icon)
 				end
 			end
 		end
@@ -767,7 +758,7 @@ end
 
 function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	if db.show.spells then
-		if unit == "player" and not buggy[spell] then
+		if unit == "player" then
 			player = spell
 			for k,v in pairs(chains) do
 				if k == spell then
@@ -791,31 +782,13 @@ function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	end
 end
 
-function Heatsink:UNIT_SPELLCAST_CHANNEL_STOP(callback, unit, spell)
-	if db.show.spells then
-		if unit == "player" and buggy[spell] then
-			player = spell
-		end
-	end
-end
-
 function Heatsink:SPELL_UPDATE_COOLDOWN()
-	for bar in pairs(anchor.active) do
-		local name = bar.candyBarLabel:GetText() or nil
-		if name then
-			local start, duration, enabled = GetSpellCooldown(name)
-			if enabled == 0 then
-				stopBar(name)
-				print("stopping "..name)
-			end
-		end
-	end
 	if db.show.spells then
 		for index, spell in pairs(delay) do
 			local start, duration, enabled = GetSpellCooldown(spell)
 			if enabled == 1 then
 				local name, rank, icon = GetSpellInfo(spell)
-				self:StartBar("SPELL", name, start, duration, icon)
+				startBar(name, duration, icon)
 				tremove(delay, index)
 			end
 		end
@@ -824,10 +797,25 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[player] then enabled = -1 end
 			if enabled == 1 then
 				local name, rank, icon = GetSpellInfo(player)
-				self:StartBar("SPELL", name, start, duration, icon)
+				startBar(name, duration, icon)
 				player = nil
 			elseif enabled == 0 and duration > 0 then
 				tinsert(delay, player)
+			end
+		end
+		for spell in pairs(incremental) do
+			local start, duration, enabled = GetSpellCooldown(spell)
+			for bar in pairs(anchor.active) do
+				if bar.candyBarLabel:GetText() == spell then
+					bar:SetDuration(duration)
+				end
+			end
+		end
+		for bar in pairs(anchor.active) do
+			local name = bar.candyBarLabel:GetText() or nil
+			local start, duration, enabled = GetSpellCooldown(name)
+				if start == 0 and duration == 0 then
+					stopBar(name)
 			end
 		end
 	end
@@ -835,7 +823,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		local name, rank, icon = GetSpellInfo(force)
 		local start, duration, enabled = GetSpellCooldown(name)
 		if enabled == 1 then
-			self:StartBar("SPELL", name, start, duration, icon)
+			startBar(name, duration, icon)
 			force = nil
 		end
 	end
@@ -846,7 +834,7 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 		local start, duration, enabled = GetSpellCooldown(pet)
 		if enabled == 1 then
 			local name, rank, icon = GetSpellInfo(pet)
-			self:StartBar("PET", name, start, duration, icon)
+			startBar(name, duration, icon)
 			pet = nil
 		end
 	end
@@ -860,7 +848,7 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
 				if duration > db.min and duration <= db.max then
 					local icon = GetInventoryItemTexture("player", slot)
-					self:StartBar("ITEM", name, start, duration, icon)
+					startBar(name, duration, icon)
 				end
 			end
 		end
@@ -883,7 +871,7 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 							name = new
 						end
 					end
-					self:StartBar("ITEM", name, start, duration, icon)
+					startBar(name, duration, icon)
 				end
 			end
 		end
@@ -893,7 +881,7 @@ end
 function Heatsink:PLAYER_FLAGS_CHANGED(callback)
 	if IsPVPTimerRunning() then
 		local time = GetPVPTimer()	
-		self:StartBar("PVP", L["PVP Timer"], nil, time/1000, faction)
+		startBar(L["PVP Timer"], time/1000, faction)
 	else
 		stopBar(L["PVP Timer"])
 	end
