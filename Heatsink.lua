@@ -860,9 +860,8 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
 			if enabled == 1 and duration > db.min and duration < db.max then
 				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
-					local icon = GetInventoryItemTexture("player", slot)
-					startBar(name, duration, icon)
-				end
+				local icon = GetInventoryItemTexture("player", slot)
+				startBar(name, duration, icon)
 			end
 		end
 	end
