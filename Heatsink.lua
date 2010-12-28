@@ -702,6 +702,7 @@ function Heatsink:OnEnable()
 
 	self:UNIT_INVENTORY_CHANGED()
 	self:BAG_UPDATE_COOLDOWN()
+	self:PLAYER_FLAGS_CHANGED()
 
 	local unused, english = UnitClass("player")
 	class = english
