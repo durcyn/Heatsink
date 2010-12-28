@@ -13,7 +13,6 @@ local RUNECD = 10
 
 local anchor, db, class
 local delay = {}
-Heatsink.delay = delay
 local player
 local pet
 local force
@@ -31,10 +30,13 @@ local GetInventoryItemLink = _G.GetInventoryItemLink
 local GetInventoryItemTexture = _G.GetInventoryItemTexture
 local GetInventorySlotInfo = _G.GetInventorySlotInfo
 local GetItemInfo = _G.GetItemInfo
+local GetPVPTimer = _G.GetPVPTimer
 local GetSpellCooldown = _G.GetSpellCooldown
 local GetSpellInfo = _G.GetSpellInfo
 local GetTime = _G.GetTime
+local IsPVPTimerRunning = _G.IsPVPTimerRunning
 local UnitClass = _G.UnitClass
+local UnitFactionGroup = _G.UnitFactionGroup
 local UnitGUID = _G.UnitGUID
 local ipairs = _G.ipairs
 local pairs = _G.pairs
@@ -402,6 +404,7 @@ local defaults = {
 			equipped = true,
 			inventory = true,
 			proc = true,
+			pvptimer = true,
 		},
 	},
 }
@@ -653,6 +656,16 @@ local options = {
 					end,
 					order = 50,
 				},
+				pvptimer = {
+					type = "toggle",
+					name = L["PVP Timer"],
+					desc = L["Toggle showing PVP flag timer"],
+					get = function () return Heatsink.db.profile.show.pvptimer end,
+					set = function (info, v)
+						Heatsink.db.profile.show.pvptimer = v
+					end,
+					order = 50,
+				},
 			},
 		},
 	},
@@ -879,10 +892,12 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 end
 
 function Heatsink:PLAYER_FLAGS_CHANGED(callback)
-	if IsPVPTimerRunning() then
-		local time = GetPVPTimer()	
-		startBar(L["PVP Timer"], time/1000, faction)
-	else
-		stopBar(L["PVP Timer"])
+	if db.show.pvptimer then
+		if IsPVPTimerRunning() then
+			local time = GetPVPTimer()	
+			startBar(L["PVP Timer"], time/1000, faction)
+		else
+			stopBar(L["PVP Timer"])
+		end
 	end
 end
