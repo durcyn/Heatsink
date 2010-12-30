@@ -8,17 +8,10 @@ local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
-
+local GCD = 1.5
 local RUNECD = 10
-
-local anchor, db, class
+local anchor, db, class, player, pet, force, faction
 local delay = {}
-local player
-local pet
-local force
-
-local faction
-
 local CreateFrame = _G.CreateFrame
 local GameFontNormal = _G.GameFontNormal
 local GetContainerItemCooldown = _G.GetContainerItemCooldown
@@ -244,10 +237,11 @@ do
 	
 	function startBar(text, duration, icon)
 		local exists = false
-		for k in pairs(anchor.active) do
-			if k.candyBarLabel:GetText() == text then
-				k:SetDuration(duration)
+		for bar in pairs(anchor.active) do
+			if bar.candyBarLabel:GetText() == text then
+				bar:SetDuration(duration)
 				exists = true
+				break
 			end
 		end
 		if not exists then 	
@@ -761,7 +755,7 @@ function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, combatEvent, 
 		if class and schools[class] then
 			for school, spell in pairs(schools[class]) do
 				local start, duration, enabled = GetSpellCooldown(school)
-				if enabled == 1 and duration > db.min and duration < db.max then
+				if duration > GCD and duration > db.min and duration < db.max then
 					local name, rank, icon = GetSpellInfo(spell)
 					startBar(school, duration, icon)
 				end
@@ -784,7 +778,7 @@ function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 					for bar, max in pairs(anchor.active) do
 						local text = bar.candyBarLabel:GetText()
 						local start, duration, enabled = GetSpellCooldown(text)
-						if duration and duration <= 1.5 and max > 1.5 then
+						if duration and duration <= GCD and max > GCD then
 							stopBar(text)
 						end
 					end
