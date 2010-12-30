@@ -277,7 +277,7 @@ do
 	
 	function runTest(anchor)
 		local duration = random(5, 30)
-		startBar("Heatsink "..duration, duration, "test")
+		startBar("Heatsink "..duration, nil, duration, "test")
 	end
 	
 	function toggleAnchor(anchor)
@@ -770,7 +770,7 @@ function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, combatEvent, 
 				local start, duration, enabled = GetSpellCooldown(school)
 				if duration > GCD and duration > db.min and duration < db.max then
 					local name, rank, icon = GetSpellInfo(spell)
-					startBar(school, duration, icon)
+					startBar(school, start, duration, icon)
 				end
 			end
 		end
