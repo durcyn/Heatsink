@@ -890,9 +890,11 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 							name = new
 						end
 					end
-					local id = GetContainerItemID(bag,slot)
-					if hasty and hearthstones[id] and duration > 900 then
-						duration = duration - 900
+					if hasty then
+						local id = GetContainerItemID(bag,slot)
+						if hearthstones[id] and duration > 900 then
+							duration = duration - 900
+						end
 					end
 					startBar(name, start, duration, icon)
 				end
