@@ -10,13 +10,11 @@ local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
 local GCD = 1.5
 local RUNECD = 10
-local hasty = nil
 local anchor, db, class, player, pet, force, faction
 local delay = {}
 local CreateFrame = _G.CreateFrame
 local GameFontNormal = _G.GameFontNormal
 local GetContainerItemCooldown = _G.GetContainerItemCooldown
-local GetContainerItemID = _G.GetContainerItemID
 local GetContainerItemInfo = _G.GetContainerItemInfo
 local GetContainerItemLink = _G.GetContainerItemLink
 local GetContainerNumSlots = _G.GetContainerNumSlots
@@ -144,14 +142,6 @@ local chains = {
 
 local incremental = {
 	[(GetSpellInfo(56972))] = true, -- 56972 Metamorphosis
-}
-
-local hearthstones =  {
-	[6948] = true, --  Hearthstone
-	[60498] = true, -- Trans-Dimensional Fabricator
-	[64488] = true, -- The Innkeeper's Daughter
-	[28585] = true, -- Ruby Slippers
-
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -698,7 +688,6 @@ function Heatsink:OnEnable()
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:RegisterEvent("PET_BAR_UPDATE_COOLDOWN")
 	self:RegisterEvent("PLAYER_FLAGS_CHANGED")
-	self:RegisterEvent("SPELLS_CHANGED")
 
 	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.5)
 	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.5)
@@ -709,7 +698,6 @@ function Heatsink:OnEnable()
 	self:UNIT_INVENTORY_CHANGED()
 	self:BAG_UPDATE_COOLDOWN()
 	self:PLAYER_FLAGS_CHANGED()
-	self:SPELLS_CHANGED()
 
 	local unused, english = UnitClass("player")
 	class = english
@@ -890,12 +878,6 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 							name = new
 						end
 					end
-					if hasty then
-						local id = GetContainerItemID(bag,slot)
-						if hearthstones[id] and duration > 900 then
-							duration = duration - 900
-						end
-					end
 					startBar(name, start, duration, icon)
 				end
 			end
@@ -914,6 +896,3 @@ function Heatsink:PLAYER_FLAGS_CHANGED(callback)
 	end
 end
 
-function Heatsink:SPELLS_CHANGED(callback)
-	hasty = (GetSpellInfo(GetSpellInfo(83944)))
-end
