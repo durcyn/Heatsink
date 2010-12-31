@@ -907,7 +907,7 @@ function Heatsink:PLAYER_FLAGS_CHANGED(callback)
 	if db.show.pvptimer then
 		if IsPVPTimerRunning() then
 			local time = GetPVPTimer()	
-			startBar(L["PVP Timer"], time/1000, faction)
+			startBar(L["PVP Timer"], nil, time/1000, faction)
 		else
 			stopBar(L["PVP Timer"])
 		end
