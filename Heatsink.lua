@@ -16,7 +16,6 @@ local CreateFrame = _G.CreateFrame
 local GameFontNormal = _G.GameFontNormal
 local GetContainerItemCooldown = _G.GetContainerItemCooldown
 local GetContainerItemInfo = _G.GetContainerItemInfo
-local GetContainerItemLink = _G.GetContainerItemLink
 local GetContainerNumSlots = _G.GetContainerNumSlots
 local GetInventoryItemCooldown = _G.GetInventoryItemCooldown
 local GetInventoryItemLink = _G.GetInventoryItemLink
@@ -138,10 +137,6 @@ local resets = {
 local chains = {
 	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
 	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
-}
-
-local incremental = {
-	[(GetSpellInfo(56972))] = true, -- 56972 Metamorphosis
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -588,7 +583,6 @@ local options = {
 							get = function () return Heatsink.db.profile.show.spells end,
 							set = function (info, v)
 									Heatsink.db.profile.show.spells = v
-									Heatsink:SPELL_UPDATE_COOLDOWN()
 								end,
 							order = 10,
 						},
@@ -615,7 +609,6 @@ local options = {
 					get = function () return Heatsink.db.profile.show.pet end,
 					set = function (info, v)
 						Heatsink.db.profile.show.pet = v
-						Heatsink:PET_BAR_UPDATE_COOLDOWN()
 					end,
 					order = 20,
 				},
@@ -753,10 +746,10 @@ end
 
 function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, combatEvent, _, sourceName, _, _, _, destFlags)
 	if combatEvent == "SPELL_INTERRUPT" and destFlags == 0x511 then
-		if class and schools[class] then
+		if db.show.school and class and schools[class] then
 			for school, spell in pairs(schools[class]) do
 				local start, duration, enabled = GetSpellCooldown(spell)
-				if duration > GCD and duration > db.min and duration < db.max then
+				if duration > db.min and duration < db.max then
 					local name, rank, icon = GetSpellInfo(spell)
 					startBar(school, start, duration, icon)
 				end
@@ -807,45 +800,38 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 			if enabled == 1 and duration > db.min and duration < db.max then
 				local name, rank, icon = GetSpellInfo(player)
 				startBar(name, start, duration, icon)
-				player = nil
 			elseif enabled == 0 and duration > 0 then
 				tinsert(delay, player)
+				print("delayed", player)
 			end
-		end
-		for spell in pairs(incremental) do
-			local start, duration, enabled = GetSpellCooldown(spell)
-			for bar in pairs(anchor.active) do
-				if bar.candyBarLabel:GetText() == spell then
-					bar:SetDuration(duration)
-				end
-			end
+			player = nil
 		end
 		for bar in pairs(anchor.active) do
 			local name = bar.candyBarLabel:GetText() or nil
 			local start, duration, enabled = GetSpellCooldown(name)
-				if start == 0 and duration == 0 then
+				if start == 0 then
 					stopBar(name)
 			end
 		end
-	end
-	if force then
-		local name, rank, icon = GetSpellInfo(force)
-		local start, duration, enabled = GetSpellCooldown(name)
-		if enabled == 1 and duration > db.min and duration < db.max then
-			startBar(name, start, duration, icon)
+		if force then
+			local name, rank, icon = GetSpellInfo(force)
+			local start, duration, enabled = GetSpellCooldown(name)
+			if enabled == 1 and duration > db.min and duration < db.max then
+				startBar(name, start, duration, icon)
+			end
 			force = nil
 		end
 	end
 end
 
 function Heatsink:PET_BAR_UPDATE_COOLDOWN()
-	if db.show.spells and pet then
+	if db.show.pet and pet then
 		local start, duration, enabled = GetSpellCooldown(pet)
 		if enabled == 1 and duration > db.min and duration < db.max then
 			local name, rank, icon = GetSpellInfo(pet)
 			startBar(name, start, duration, icon)
-			pet = nil
 		end
+		pet = nil
 	end
 end
 
@@ -870,9 +856,8 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 			for slot = 1, bagslots do
 				local start, duration, enabled = GetContainerItemCooldown(bag,slot)
 				if enabled == 1 and duration > db.min and duration < db.max then
-					local link = GetContainerItemLink(bag, slot)
+					local icon, count, locked, quality, readable, lootable, link = GetContainerItemInfo(bag, slot)
 					local _,_,name = link:find("%|h%[(.-)%]%|h")
-					local icon = GetContainerItemInfo(bag, slot)
 					for old,new in pairs(substitute) do
 						if name:find(old) then
 							name = new
