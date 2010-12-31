@@ -767,7 +767,7 @@ function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, combatEvent, 
 	if combatEvent == "SPELL_INTERRUPT" and destFlags == 0x511 then
 		if class and schools[class] then
 			for school, spell in pairs(schools[class]) do
-				local start, duration, enabled = GetSpellCooldown(school)
+				local start, duration, enabled = GetSpellCooldown(spell)
 				if duration > GCD and duration > db.min and duration < db.max then
 					local name, rank, icon = GetSpellInfo(spell)
 					startBar(school, start, duration, icon)
