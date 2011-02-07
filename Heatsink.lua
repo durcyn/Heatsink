@@ -98,6 +98,7 @@ local runewhitelist = {
 local chains = {
 	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
 	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
+	[(GetSpellInfo(91711))] = (GetSpellInfo(6229)), -- 91711 Nether Ward, --6229 Shadow Ward
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -638,8 +639,8 @@ end
 
 function Heatsink:OnEnable()
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	self:RegisterEvent("PLAYER_FLAGS_CHANGED")
+	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "PLAYER_FLAGS_CHANGED")
 
 	self:RegisterBucketEvent("SPELL_UPDATE_COOLDOWN", 0.2)
 	self:RegisterBucketEvent("PET_BAR_UPDATE_COOLDOWN", 0.2)
@@ -701,14 +702,6 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 		else
 			name, _, _, _, _, _, _, _, _, icon = GetItemInfo(item)
 		end
-		startBar(name, start, duration, icon)
-	end
-end
-
-function Heatsink:COMBAT_LOG_EVENT_UNFILTERED(callback, timestamp, combatEvent, _, _, _, _, _, destFlags, _, _, _, _, interrupted, school)
-	if combatEvent == "SPELL_INTERRUPT" and destFlags == 0x511 then
-		local start, duration, enabled = GetSpellCooldown(interrupted)
-		local name, rank, icon = GetSpellInfo(interrupted)
 		startBar(name, start, duration, icon)
 	end
 end
