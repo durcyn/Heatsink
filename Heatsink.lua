@@ -661,6 +661,20 @@ function Heatsink:OnEnable()
 			force = 20608 -- 20608 Reincarnation
 		end)
 	end
+
+	local tabs = GetNumSpellTabs()
+	local start, increment = GetSpellTabInfo(tabs)
+	local max = start+increment
+	for i = 1, max do
+		local start, duration, enabled = GetSpellCooldown(i, BOOKTYPE_SPELL)
+		if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then enabled = -1 end
+		if enabled == 1 and duration > db.min and duration < db.max then
+			local name, rank, icon = GetSpellInfo(i, BOOKTYPE_SPELL)
+			startBar(name, start, duration, icon)
+		elseif enabled == 0 and duration > 0 then
+			tinsert(delay, spell)
+		end
+	end
 end
 
 function Heatsink:OnDisable()
