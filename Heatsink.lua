@@ -663,8 +663,8 @@ function Heatsink:OnEnable()
 	end
 
 	local tabs = GetNumSpellTabs()
-	local start, increment = GetSpellTabInfo(tabs)
-	local max = start+increment
+	local _, _, start, increment = GetSpellTabInfo(tabs)
+	local max = start + increment
 	for i = 1, max do
 		local start, duration, enabled = GetSpellCooldown(i, BOOKTYPE_SPELL)
 		if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then enabled = -1 end
