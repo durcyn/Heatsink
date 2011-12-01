@@ -40,4 +40,3 @@ externals:
 	tag: latest
   libs/LibInternalCooldowns-1.0: 
     url: svn://svn.wowace.com/wow/libinternalcooldowns-1-0/mainline/trunk/LibInternalCooldowns-1.0
-	tag: latest
