@@ -99,6 +99,8 @@ local chains = {
 	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
 	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
 	[(GetSpellInfo(91711))] = (GetSpellInfo(6229)), -- 91711 Nether Ward, --6229 Shadow Ward
+	[(GetSpellInfo(403))] = (GetSpellInfo(16166)), -- 403 Lightning Bolt, -- 16166 Elemental Mastery
+	[(GetSpellInfo(421))] = (GetSpellInfo(16166)), -- 421 Chain Lightning, -- 16166 Elemental Mastery
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -668,7 +670,7 @@ function Heatsink:OnEnable()
 	for i = 1, max do
 		local start, duration, enabled = GetSpellCooldown(i, BOOKTYPE_SPELL)
 		if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then enabled = -1 end
-		if enabled == 1 and duration > db.min and duration < db.max then
+		if enabled == 1 and duration >= db.min and duration <= db.max then
 			local name, rank, icon = GetSpellInfo(i, BOOKTYPE_SPELL)
 			startBar(name, start, duration, icon)
 		elseif enabled == 0 and duration > 0 then
@@ -749,7 +751,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		end
 		for index, spell in pairs(delay) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if enabled == 1 and duration > db.min and duration < db.max then
+			if enabled == 1 and duration >= db.min and duration <= db.max then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(name, start, duration, icon)
 				tremove(delay, index)
@@ -758,7 +760,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		if force then
 			local name, rank, icon = GetSpellInfo(force)
 			local start, duration, enabled = GetSpellCooldown(name)
-			if enabled == 1 and duration > db.min and duration < db.max then
+			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
 			end
 			force = nil
@@ -766,7 +768,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
 			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then enabled = -1 end
-			if enabled == 1 and duration > db.min and duration < db.max then
+			if enabled == 1 and duration >= db.min and duration <= db.max then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(name, start, duration, icon)
 			elseif enabled == 0 and duration > 0 then
@@ -781,7 +783,7 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 	if db.show.pet then
 		for index, spell in pairs(pet) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if enabled == 1 and duration > db.min and duration < db.max then
+			if enabled == 1 and duration >= db.min and duration <= db.max then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(name, start, duration, icon)
 			end
@@ -794,7 +796,7 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 	if db.show.equipped then
 		for slot in pairs(slots) do
 			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
-			if enabled == 1 and duration > db.min and duration < db.max then
+			if enabled == 1 and duration >= db.min and duration <= db.max then
 				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
 				local icon = GetInventoryItemTexture("player", slot)
 				startBar(name, start, duration, icon)
@@ -810,7 +812,7 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 			local bagslots = GetContainerNumSlots(bag)
 			for slot = 1, bagslots do
 				local start, duration, enabled = GetContainerItemCooldown(bag,slot)
-				if enabled == 1 and duration > db.min and duration < db.max then
+				if enabled == 1 and duration >= db.min and duration <= db.max then
 					local icon, count, locked, quality, readable, lootable, link = GetContainerItemInfo(bag, slot)
 					local _,_,name = link:find("%|h%[(.-)%]%|h")
 					for old,new in pairs(substitute) do
