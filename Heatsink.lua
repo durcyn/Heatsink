@@ -636,7 +636,7 @@ function Heatsink:OnInitialize()
 	anchor = createAnchor("HeatsinkAnchor", "Heatsink")
 
 	local ufg = UnitFactionGroup("player")
-	faction = "Interface\\Addons\\Broker_PVPTimer\\icons\\"..ufg.."_active"
+	faction = "Interface\\Addons\\Heatsink\\Icons\\"..ufg.."_active"
 end
 
 function Heatsink:OnEnable()
@@ -740,7 +740,10 @@ end
 function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then
 		for bar in pairs(anchor.active) do
-			local name = bar.candyBarLabel:GetText() or nil
+			local name
+			name = bar.candyBarLabel:GetText() 
+			if not name then return end
+
 			local start, duration, enabled = GetSpellCooldown(name)
 			if start == 0 then
 				stopBar(name)
