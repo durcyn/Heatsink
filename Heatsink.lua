@@ -99,8 +99,6 @@ local chains = {
 	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
 	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
 	[(GetSpellInfo(91711))] = (GetSpellInfo(6229)), -- 91711 Nether Ward, --6229 Shadow Ward
-	[(GetSpellInfo(403))] = (GetSpellInfo(16166)), -- 403 Lightning Bolt, -- 16166 Elemental Mastery
-	[(GetSpellInfo(421))] = (GetSpellInfo(16166)), -- 421 Chain Lightning, -- 16166 Elemental Mastery
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
