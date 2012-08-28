@@ -64,7 +64,6 @@ local slots = {
 		[(GetInventorySlotInfo("Trinket1Slot"))] = true,
 --		[(GetInventorySlotInfo("MainHandSlot"))] = true,
 --		[(GetInventorySlotInfo("SecondaryHandSlot"))] = true,
---		[(GetInventorySlotInfo("RangedSlot"))] = true,
 	}
 
 local substitute = {
@@ -193,7 +192,7 @@ do
 	end
 	
 	function startBar(text, start, duration, icon)
-		local length = (start and (duration-(GetTime()-start)) or duration)
+		local length = start + duration - GetTime()
 		if getBar(text) then
 			for bar in pairs(anchor.active) do
 				if bar.candyBarLabel:GetText() == text then
@@ -667,12 +666,14 @@ function Heatsink:OnEnable()
 	local max = start + increment
 	for i = 1, max do
 		local start, duration, enabled = GetSpellCooldown(i, BOOKTYPE_SPELL)
-		if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then enabled = -1 end
-		if enabled == 1 and duration >= db.min and duration <= db.max then
-			local name, rank, icon = GetSpellInfo(i, BOOKTYPE_SPELL)
-			startBar(name, start, duration, icon)
-		elseif enabled == 0 and duration > 0 then
-			tinsert(delay, spell)
+		if start ~= 0 then
+			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then enabled = -1 end
+			if enabled == 1 and duration >= db.min and duration <= db.max then
+				local name, rank, icon = GetSpellInfo(i, BOOKTYPE_SPELL)
+				startBar(name, start, duration, icon)
+			elseif enabled == 0 and duration > 0 then
+				tinsert(delay, spell)
+			end
 		end
 	end
 end
