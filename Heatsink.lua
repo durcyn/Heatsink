@@ -94,12 +94,6 @@ local runewhitelist = {
 	[(GetSpellInfo(47528))] = true, -- 47528 Mind Freeze
 } 
 
-local chains = {
-	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
-	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
-	[(GetSpellInfo(91711))] = (GetSpellInfo(6229)), -- 91711 Nether Ward, --6229 Shadow Ward
-}
-
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
 local createAnchor, toggleAnchor, updateAnchor, runTest, startBar, stopBar, getBar
 do
@@ -725,11 +719,6 @@ function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
 	if db.show.spells then
 		if unit == "player" then
 			tinsert(player, spell)
-			for k,v in pairs(chains) do
-				if k == spell then
-					tinsert(player, v)
-				end
-			end
 		elseif unit =="pet" then
 			tinsert(pet, spell)
 		end
