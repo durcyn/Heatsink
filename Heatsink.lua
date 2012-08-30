@@ -186,6 +186,7 @@ do
 	end
 	
 	function startBar(text, start, duration, icon)
+		if start == 0 then return end
 		local length = start + duration - GetTime()
 		if getBar(text) then
 			for bar in pairs(anchor.active) do
@@ -217,7 +218,9 @@ do
 	
 	function runTest(anchor)
 		local duration = random(5, 30)
-		startBar("Heatsink "..duration, nil, duration, "test")
+		local time = GetTime()
+		local start = time - duration
+		startBar("Heatsink "..duration, start, duration, "test")
 	end
 	
 	function toggleAnchor(anchor)
