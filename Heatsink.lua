@@ -98,6 +98,11 @@ local chains = {
 	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
 	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
 	[(GetSpellInfo(91711))] = (GetSpellInfo(6229)), -- 91711 Nether Ward, --6229 Shadow Ward
+	[(GetSpellInfo(17767))] = (GetSpellInfo(119898)), -- 17767 Shadow Bulwark --119898 Command Demon
+	[(GetSpellInfo(89751))] = (GetSpellInfo(119898)), -- 89751 Felstorm --119898 Command Demon
+	[(GetSpellInfo(119899))] = (GetSpellInfo(119898)), -- 119899 Cauterize Master --119898 Command Demon
+	[(GetSpellInfo(119909))] = (GetSpellInfo(119898)), -- 119909 Whiplash --119898 Command Demon
+	[(GetSpellInfo(132409))] = (GetSpellInfo(119898)), -- 132409 Spell Lock --119898 Command Demon
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -724,9 +729,10 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 	end
 end
 
-function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, spell)
+function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, name, rank, line, id)
 	if db.show.spells then
 		if unit == "player" then
+			spell = (GetSpellInfo(id)) or name
 			tinsert(player, spell)
 			for k,v in pairs(chains) do
 				if k == spell then
