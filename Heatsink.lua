@@ -45,6 +45,8 @@ local tinsert = _G.table.insert
 local tremove = _G.table.remove
 local tsort = _G.table.sort
 
+local defaulticon = "Interface\\Icons\\spell_nature_timestop"
+
 local slots = {	
 		[(GetInventorySlotInfo("HeadSlot"))] = true, -- Engineering Mind Control stuff
 		[(GetInventorySlotInfo("NeckSlot"))] = true, -- Black Temple teleport necks
@@ -220,7 +222,7 @@ do
 			bar:SetLabel(text)
 			bar:SetDuration(length)
 			bar:SetTimeVisibility(true)
-			bar:SetIcon(icon)
+			bar:SetIcon(icon or defaulticon)
 			bar:SetScale(db.scale)
 			bar:Start()
 		end
@@ -228,10 +230,9 @@ do
 	end
 	
 	function runTest(anchor)
-		local duration = random(5, 30)
-		local time = GetTime()
-		local start = time - duration
-		startBar("Heatsink "..duration, start, duration, "test")
+		local duration = random(10, 45)
+		local start = GetTime()
+		startBar("Heatsink "..duration, start, duration, defaulticon)
 	end
 	
 	function toggleAnchor(anchor)
@@ -842,7 +843,8 @@ function Heatsink:PLAYER_FLAGS_CHANGED(callback)
 	if db.show.pvptimer then
 		if IsPVPTimerRunning() then
 			local time = GetPVPTimer()	
-			startBar(L["PVP Timer"], nil, time/1000, faction)
+			local start = GetTime()
+			startBar(L["PVP Timer"], start, time/1000, faction)
 		else
 			stopBar(L["PVP Timer"])
 		end
