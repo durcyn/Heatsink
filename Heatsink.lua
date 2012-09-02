@@ -733,7 +733,7 @@ end
 function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, name, rank, line, id)
 	if db.show.spells then
 		if unit == "player" then
-			spell = (GetSpellInfo(id)) or name
+			local spell = (GetSpellInfo(id)) or name
 			tinsert(player, spell)
 			for k,v in pairs(chains) do
 				if k == spell then
