@@ -598,11 +598,11 @@ function Heatsink:OnEnable()
 	icd.RegisterCallback(self, "InternalCooldowns_Proc")
 	candy.RegisterCallback(self, "LibCandyBar_Stop")
 
-	self:SPELLS_CHANGED()
+	self:ScanSpells()
+	self:CheckPVP()
 	self:SPELL_UPDATE_COOLDOWN()
 	self:UNIT_INVENTORY_CHANGED()
 	self:BAG_UPDATE_COOLDOWN()
-	self:PLAYER_FLAGS_CHANGED()
 end
 
 function Heatsink:OnDisable()
