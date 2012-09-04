@@ -26,6 +26,10 @@ local tsort = _G.table.sort
 
 local defaulticon = "Interface\\Icons\\spell_nature_timestop"
 
+local petOverride = {
+	[(GetSpellInfo(119898))] = true,
+}
+
 local slots = {	
 		[(GetInventorySlotInfo("HeadSlot"))] = true, -- Engineering Mind Control stuff
 		[(GetInventorySlotInfo("NeckSlot"))] = true, -- Black Temple teleport necks
@@ -676,6 +680,14 @@ function Heatsink:ScanSpells()
 
 	wipe(pet)
 	if HasPetSpells() then 
+		local i = 1
+		local continue = true
+		while continue do
+			local spell = GetSpellBookItemName(i, BOOKTYPE_PET)
+			if not spell then continue = false break end 
+			if spell then tinsert(pet, spell) end
+			i = i + 1
+		end
 	end
 end
 
@@ -697,6 +709,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
 			if class == "DEATHKNIGHT" and duration == RUNECD then enabled = -1 end
+			if HasPetSpells() and petOverride[spell] then enabled = -1  end
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(spell, start, duration, icon)
