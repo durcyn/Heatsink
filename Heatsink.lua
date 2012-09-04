@@ -1,6 +1,6 @@
 local _G = getfenv(0)
 local LibStub = _G.LibStub
-local Heatsink = LibStub("AceAddon-3.0"):NewAddon("Heatsink", "AceConsole-3.0", "AceEvent-3.0", "AceBucket-3.0")
+local Heatsink = LibStub("AceAddon-3.0"):NewAddon("Heatsink", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
 
 local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale("Heatsink")
 local candy = LibStub("LibCandyBar-3.0")
