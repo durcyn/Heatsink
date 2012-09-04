@@ -8,7 +8,7 @@ local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
 local RUNECD = 10
-local anchor, db, class, force, faction
+local anchor, db, class, faction, petprefix
 local player = {}
 local pet = {}
 local ipairs = _G.ipairs
@@ -591,6 +591,8 @@ end
 
 function Heatsink:OnEnable()
 	self:RegisterEvent("SPELLS_CHANGED", "ScanSpells")
+	self:RegisterEvent("PET_BAR_UPDATE", "ScanPetSpells")
+	self:RegisterEvent("PET_BAR_HIDE", "ScanPetSpells")
 	self:RegisterEvent("PLAYER_FLAGS_CHANGED", "CheckPVP")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "CheckPVP")
 
@@ -603,6 +605,7 @@ function Heatsink:OnEnable()
 	candy.RegisterCallback(self, "LibCandyBar_Stop")
 
 	self:ScanSpells()
+	self:ScanPetSpells()
 	self:CheckPVP()
 	self:SPELL_UPDATE_COOLDOWN()
 	self:UNIT_INVENTORY_CHANGED()
@@ -677,9 +680,13 @@ function Heatsink:ScanSpells()
 			end					
 		end
 	end
+end
 
+function Heatsink:ScanPetSpells()
 	wipe(pet)
-	if HasPetSpells() then 
+	local check, pettype = HasPetSpells()
+	if check then 
+		petprefix = (pettype == "DEMON") and PET_TYPE_DEMON or PET_TYPE_PET
 		local i = 1
 		local continue = true
 		while continue do
@@ -724,9 +731,10 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 	if db.show.pet then
 		for index, spell in pairs(pet) do
 			local start, duration, enabled = GetSpellCooldown(spell)
+			spell = string.format("%s: %s", petprefix, spell)
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				local name, rank, icon = GetSpellInfo(spell)
-				startBar(name, start, duration, icon)
+				startBar(spell, start, duration, icon)
 			elseif duration == 0 and getBar(spell) then
 				stopBar(spell)
 			end
