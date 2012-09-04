@@ -724,13 +724,15 @@ end
 function Heatsink:UNIT_INVENTORY_CHANGED()
 	if db.show.equipped then
 		for slot in pairs(slots) do
-			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
-			local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
-			if enabled == 1 and duration >= db.min and duration <= db.max then
-				local icon = GetInventoryItemTexture("player", slot)
-				startBar(name, start, duration, icon)
-			elseif duration == 0 then
-				stopBar(name)
+			local id = GetInventoryItemID("player", slot)
+			if id then
+				local start, duration, enabled = GetInventoryItemCooldown("player", slot)
+				local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
+				if enabled == 1 and duration >= db.min and duration <= db.max then
+					startBar(name, start, duration, icon)
+				elseif duration == 0 then
+					stopBar(name)
+				end
 			end
 		end
 	end
