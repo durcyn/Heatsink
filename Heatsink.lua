@@ -1,6 +1,6 @@
 local _G = getfenv(0)
 local LibStub = _G.LibStub
-local Heatsink = LibStub("AceAddon-3.0"):NewAddon("Heatsink", "AceConsole-3.0", "AceEvent-3.0", "AceBucket-3.0", "AceHook-3.0")
+local Heatsink = LibStub("AceAddon-3.0"):NewAddon("Heatsink", "AceConsole-3.0", "AceEvent-3.0", "AceBucket-3.0")
 
 local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale("Heatsink")
 local candy = LibStub("LibCandyBar-3.0")
@@ -11,24 +11,6 @@ local RUNECD = 10
 local anchor, db, class, force, faction
 local player = {}
 local pet = {}
-local CreateFrame = _G.CreateFrame
-local GameFontNormal = _G.GameFontNormal
-local GetContainerItemCooldown = _G.GetContainerItemCooldown
-local GetContainerItemInfo = _G.GetContainerItemInfo
-local GetContainerNumSlots = _G.GetContainerNumSlots
-local GetInventoryItemCooldown = _G.GetInventoryItemCooldown
-local GetInventoryItemLink = _G.GetInventoryItemLink
-local GetInventoryItemTexture = _G.GetInventoryItemTexture
-local GetInventorySlotInfo = _G.GetInventorySlotInfo
-local GetItemInfo = _G.GetItemInfo
-local GetPVPTimer = _G.GetPVPTimer
-local GetSpellCooldown = _G.GetSpellCooldown
-local GetSpellInfo = _G.GetSpellInfo
-local GetTime = _G.GetTime
-local IsPVPTimerRunning = _G.IsPVPTimerRunning
-local UnitClass = _G.UnitClass
-local UnitFactionGroup = _G.UnitFactionGroup
-local UnitGUID = _G.UnitGUID
 local ipairs = _G.ipairs
 local pairs = _G.pairs
 local unpack = _G.unpack
@@ -621,19 +603,10 @@ function Heatsink:OnEnable()
 	self:UNIT_INVENTORY_CHANGED()
 	self:BAG_UPDATE_COOLDOWN()
 	self:PLAYER_FLAGS_CHANGED()
-
---	local unused, english = UnitClass("player")
---	class = english
---	if class == "SHAMAN" then
---		self:SecureHook("UseSoulstone", function()
---			force = 20608 -- 20608 Reincarnation
---		end)
---	end
 end
 
 function Heatsink:OnDisable()
 	self:UnregisterAllEvents()
---	self:UnhookAll()
 	icd.UnregisterCallback(self, "InternalCooldowns_Proc")
 	candy.UnregisterCallback(self, "LibCandyBar_Stop")
 end
@@ -731,14 +704,6 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 				stopBar(spell)
 			end
 		end
---		if force then
---			local name, rank, icon = GetSpellInfo(force)
---			local start, duration, enabled = GetSpellCooldown(name)
---			if enabled == 1 and duration >= db.min and duration <= db.max then
---				startBar(name, start, duration, icon)
---			end
---			force = false
---		end
 	end
 end
 
