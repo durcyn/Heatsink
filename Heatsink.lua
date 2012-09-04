@@ -1,19 +1,16 @@
 local _G = getfenv(0)
 local LibStub = _G.LibStub
 local Heatsink = LibStub("AceAddon-3.0"):NewAddon("Heatsink", "AceConsole-3.0", "AceEvent-3.0", "AceBucket-3.0", "AceHook-3.0")
-_G.Heatsink = Heatsink
 
 local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale("Heatsink")
 local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
-local GCD = 1.5
 local RUNECD = 10
 local anchor, db, class, force, faction
 local player = {}
 local pet = {}
-local delay = {}
 local CreateFrame = _G.CreateFrame
 local GameFontNormal = _G.GameFontNormal
 local GetContainerItemCooldown = _G.GetContainerItemCooldown
@@ -66,45 +63,6 @@ local slots = {
 		[(GetInventorySlotInfo("Trinket1Slot"))] = true,
 --		[(GetInventorySlotInfo("MainHandSlot"))] = true,
 --		[(GetInventorySlotInfo("SecondaryHandSlot"))] = true,
-	}
-
-local substitute = {
-	[L["Mana Jade"]] = L["Stones"],
-	[L["Mana Ruby"]] = L["Stones"],
-	[L["Mana Citrine"]] = L["Stones"],
-	[L["Mana Agate"]] = L["Stones"],
-	[L["Mana Emerald"]] = L["Stones"],
-	[L["Healthstone$"]] = L["Stones"],
-	[L["Potion"]] = L["Potions"],
-	[L["Injector"]] = L["Potions"],
-	[L["Blue Ogre Brew Special"]]= L["Potions"],  --Ogri'la
-	[L["Red Ogre Brew Special"]] = L["Potions"],  --Ogri'la
-	[L["Blue Ogre Brew"]]= L["Potions"],  --Ogri'la
-	[L["Red Ogre Brew"]] = L["Potions"],  --Ogri'la
-	[L["Bottled Nethergon Energy"]] = L["Potions"],  --Tempest Keep
-	[L["Bottled Nethergon Vapor"]] = L["Potions"],   --Tempest Keep
-	[L["Cenarion Mana Salve"]] = L["Potions"],   --Cenarion Expedition
-	[L["Cenarion Healing Salve"]] = L["Potions"],   --Cenarion Expedition
-	[L["Major Healing Draught"]] = L["Potions"],   --PvP
-	[L["Major Mana Draught"]] = L["Potions"],   --PvP
-	[L["Superior Mana Draught"]] = L["Potions"],   --PvP
-	[L["Superior Healing Draught"]] = L["Potions"],   --PvP
-	[L["Noth's Special Brew"]] = L["Potions"], -- Deathknight Starting Area
-}
-
-local runewhitelist = { 
-	[(GetSpellInfo(47528))] = true, -- 47528 Mind Freeze
-} 
-
-local chains = {
-	[(GetSpellInfo(1856))] = (GetSpellInfo(1784)), -- 1856 Vanish -- 1784 Stealth
-	[(GetSpellInfo(86213))] = (GetSpellInfo(86121)), -- 86213 Soul Swap Exhale, --86121 Soul Swap
-	[(GetSpellInfo(91711))] = (GetSpellInfo(6229)), -- 91711 Nether Ward, --6229 Shadow Ward
-	[(GetSpellInfo(17767))] = (GetSpellInfo(119898)), -- 17767 Shadow Bulwark --119898 Command Demon
-	[(GetSpellInfo(89751))] = (GetSpellInfo(119898)), -- 89751 Felstorm --119898 Command Demon
-	[(GetSpellInfo(119899))] = (GetSpellInfo(119898)), -- 119899 Cauterize Master --119898 Command Demon
-	[(GetSpellInfo(119909))] = (GetSpellInfo(119898)), -- 119909 Whiplash --119898 Command Demon
-	[(GetSpellInfo(132409))] = (GetSpellInfo(119898)), -- 132409 Spell Lock --119898 Command Demon
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -646,50 +604,36 @@ function Heatsink:OnInitialize()
 end
 
 function Heatsink:OnEnable()
-	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-	self:RegisterEvent("PLAYER_FLAGS_CHANGED")
-	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "PLAYER_FLAGS_CHANGED")
+	self:RegisterEvent("SPELLS_CHANGED", ScanSpells)
+	self:RegisterEvent("PLAYER_FLAGS_CHANGED", CheckPVP)
+	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", CheckPVP)
 
-	self:RegisterBucketEvent("SPELL_UPDATE_COOLDOWN", 0.2)
-	self:RegisterBucketEvent("PET_BAR_UPDATE_COOLDOWN", 0.2)
-	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.2)
-	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.2)
+	self:RegisterBucketEvent("SPELL_UPDATE_COOLDOWN", 0.1)
+	self:RegisterBucketEvent("PET_BAR_UPDATE_COOLDOWN", 0.1)
+	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.1)
+	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.1)
 
 	icd.RegisterCallback(self, "InternalCooldowns_Proc")
 	candy.RegisterCallback(self, "LibCandyBar_Stop")
 
+	self:SPELLS_CHANGED()
+	self:SPELL_UPDATE_COOLDOWN()
 	self:UNIT_INVENTORY_CHANGED()
 	self:BAG_UPDATE_COOLDOWN()
 	self:PLAYER_FLAGS_CHANGED()
 
-	local unused, english = UnitClass("player")
-	class = english
-	if class == "SHAMAN" then
-		self:SecureHook("UseSoulstone", function()
-			force = 20608 -- 20608 Reincarnation
-		end)
-	end
-
-	local tabs = GetNumSpellTabs()
-	local _, _, start, increment = GetSpellTabInfo(tabs)
-	local max = start + increment
-	for i = 1, max do
-		local start, duration, enabled = GetSpellCooldown(i, BOOKTYPE_SPELL)
-		if start ~= 0 then
-			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then enabled = -1 end
-			if enabled == 1 and duration >= db.min and duration <= db.max then
-				local name, rank, icon = GetSpellInfo(i, BOOKTYPE_SPELL)
-				startBar(name, start, duration, icon)
-			elseif enabled == 0 and duration > 0 then
-				tinsert(delay, spell)
-			end
-		end
-	end
+--	local unused, english = UnitClass("player")
+--	class = english
+--	if class == "SHAMAN" then
+--		self:SecureHook("UseSoulstone", function()
+--			force = 20608 -- 20608 Reincarnation
+--		end)
+--	end
 end
 
 function Heatsink:OnDisable()
 	self:UnregisterAllEvents()
-	self:UnhookAll()
+--	self:UnhookAll()
 	icd.UnregisterCallback(self, "InternalCooldowns_Proc")
 	candy.UnregisterCallback(self, "LibCandyBar_Stop")
 end
@@ -730,64 +674,71 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 	end
 end
 
-function Heatsink:UNIT_SPELLCAST_SUCCEEDED(callback, unit, name, rank, line, id)
-	if db.show.spells then
-		if unit == "player" then
-			local spell = (GetSpellInfo(id)) or name
-			tinsert(player, spell)
-			for k,v in pairs(chains) do
-				if k == spell then
-					tinsert(player, v)
+function Heatsink:ScanSpells()
+	wipe(player)
+	local tabs = 1
+	if GetSpecialization() ~= 0 then tabs = 2 end
+			
+	local name, texture, offset, last = GetSpellTabInfo(tabs)
+	local spells = offset + last
+
+	for i = 1, spells do
+		local spell = GetSpellBookItemName(i, BOOKTYPE_SPELL)
+		if spell then tinsert(player, spell) end
+	end
+
+	for i = 1, GetNumFlyouts() do
+		local n = GetFlyoutID(i)
+		local name, desc, spells, valid = GetFlyoutInfo(n)
+		if valid then
+			for j = 1, spells do
+				local id, known = GetFlyoutSlotInfo(n,j)
+				if known then
+					local spell = (GetSpellInfo(spellid))
+					if spell then tinsert(player,spell) end
 				end
-			end
-		elseif unit =="pet" then
-			tinsert(pet, spell)
+			end					
+		end
+	end
+
+	wipe(pet)
+	if HasPetSpells() then 
+	end
+end
+
+
+function Heatsink:CheckPVP()
+	if db.show.pvptimer then
+		if IsPVPTimerRunning() then
+			local time = GetPVPTimer()	
+			local start = GetTime()
+			startBar(PVP, start, time/1000, UnitIsPVPFreeForAll('player') and "FFA" or faction)
+		else
+			stopBar(PVP)
 		end
 	end
 end
 
 function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then
-		for bar in pairs(anchor.active) do
-			local name
-			name = bar.candyBarLabel:GetText() 
-			if not name then return end
-
-			local start, duration, enabled = GetSpellCooldown(name)
-			if start == 0 then
-				stopBar(name)
-			elseif start ~= bar.start then
-				local icon = bar.candyBarIconFrame:GetTexture() 
-				startBar(name, start, duration, icon)
-			end
-		end
-		for index, spell in pairs(delay) do
-			local start, duration, enabled = GetSpellCooldown(spell)
-			if enabled == 1 and duration >= db.min and duration <= db.max then
-				local name, rank, icon = GetSpellInfo(spell)
-				startBar(name, start, duration, icon)
-				tremove(delay, index)
-			end
-		end
-		if force then
-			local name, rank, icon = GetSpellInfo(force)
-			local start, duration, enabled = GetSpellCooldown(name)
-			if enabled == 1 and duration >= db.min and duration <= db.max then
-				startBar(name, start, duration, icon)
-			end
-			force = nil
-		end
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then enabled = -1 end
+			if class == "DEATHKNIGHT" and duration == RUNECD then enabled = -1 end
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				local name, rank, icon = GetSpellInfo(spell)
-				startBar(name, start, duration, icon)
-			elseif enabled == 0 and duration > 0 then
-				tinsert(delay, spell)
+				startBar(spell, start, duration, icon)
+			elseif duration == 0 then
+				stopBar(spell)
 			end
-			tremove(player, index)
 		end
+--		if force then
+--			local name, rank, icon = GetSpellInfo(force)
+--			local start, duration, enabled = GetSpellCooldown(name)
+--			if enabled == 1 and duration >= db.min and duration <= db.max then
+--				startBar(name, start, duration, icon)
+--			end
+--			force = false
+--		end
 	end
 end
 
@@ -798,8 +749,9 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(name, start, duration, icon)
+			elseif duration == 0 and getBar(spell) then
+				stopBar(spell)
 			end
-			tremove(pet, index)
 		end
 	end
 end
@@ -808,17 +760,18 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 	if db.show.equipped then
 		for slot in pairs(slots) do
 			local start, duration, enabled = GetInventoryItemCooldown("player", slot)
+			local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
 			if enabled == 1 and duration >= db.min and duration <= db.max then
-				local _,_,name = GetInventoryItemLink("player", slot):find("%|h%[(.-)%]%|h")
 				local icon = GetInventoryItemTexture("player", slot)
 				startBar(name, start, duration, icon)
+			elseif duration == 0 then
+				stopBar(name)
 			end
 		end
 	end
 end
 
 function Heatsink:BAG_UPDATE_COOLDOWN()
-	self:UNIT_INVENTORY_CHANGED()
 	if db.show.inventory then
 		for bag = 0,4 do
 			local bagslots = GetContainerNumSlots(bag)
@@ -827,27 +780,9 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 				if enabled == 1 and duration >= db.min and duration <= db.max then
 					local icon, count, locked, quality, readable, lootable, link = GetContainerItemInfo(bag, slot)
 					local _,_,name = link:find("%|h%[(.-)%]%|h")
-					for old,new in pairs(substitute) do
-						if name:find(old) then
-							name = new
-						end
-					end
 					startBar(name, start, duration, icon)
 				end
 			end
 		end
 	end
 end
-
-function Heatsink:PLAYER_FLAGS_CHANGED(callback)
-	if db.show.pvptimer then
-		if IsPVPTimerRunning() then
-			local time = GetPVPTimer()	
-			local start = GetTime()
-			startBar(L["PVP Timer"], start, time/1000, faction)
-		else
-			stopBar(L["PVP Timer"])
-		end
-	end
-end
-
