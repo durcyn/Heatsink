@@ -586,9 +586,9 @@ function Heatsink:OnInitialize()
 end
 
 function Heatsink:OnEnable()
-	self:RegisterEvent("SPELLS_CHANGED", ScanSpells)
-	self:RegisterEvent("PLAYER_FLAGS_CHANGED", CheckPVP)
-	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", CheckPVP)
+	self:RegisterEvent("SPELLS_CHANGED", "ScanSpells")
+	self:RegisterEvent("PLAYER_FLAGS_CHANGED", "CheckPVP")
+	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "CheckPVP")
 
 	self:RegisterBucketEvent("SPELL_UPDATE_COOLDOWN", 0.1)
 	self:RegisterBucketEvent("PET_BAR_UPDATE_COOLDOWN", 0.1)
