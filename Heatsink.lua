@@ -55,7 +55,7 @@ do
 
 	local function rearrangeBars(anchor)
 		local tmp = {}
-		for bar in pairs(anchor.active) do
+		for bar in pairs(anchor.running) do
 			tinsert(tmp, bar)
 		end
 		tsort(tmp, sortBars)
@@ -114,7 +114,7 @@ do
 	
 	function getBar(text)
 		local bar
-		for k in pairs(anchor.active) do
+		for k in pairs(anchor.running) do
 			if k.candyBarLabel:GetText() == text then
 				bar = true
 				break
@@ -125,7 +125,7 @@ do
 	
 	function stopBar(text)
 		local bar
-		for k in pairs(anchor.active) do
+		for k in pairs(anchor.running) do
 			if (not text or k.candyBarLabel:GetText() == text) then
 				k:Stop()
 				bar = true
@@ -138,8 +138,8 @@ do
 	function startBar(text, start, duration, icon)
 		local length = start + duration - GetTime()
 		if getBar(text) then
-			for bar in pairs(anchor.active) do
-				if bar.text == text and bar.start ~= start then
+			for bar in pairs(anchor.running) do
+				if bar:Get("id") == text and bar:Get("start") ~= start then
 					stopBar(text)
 					startBar(text, start, duration, icon)
 				end
@@ -147,15 +147,15 @@ do
 		else
 			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
 			bar:Set("anchor", anchor)
-			anchor.active[bar] = {}
+			bar:Set("id", text)
+			bar:Set("start", start)
+			anchor.running[bar] = true
 			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
 			bar:SetColor(unpack(db.color.bar))
 			bar.candyBarLabel:SetJustifyH(db.justify)
 			bar.candyBarLabel:SetTextColor(unpack(db.color.text))
 			bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
 			bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
-			bar.start = start
-			bar.text = text
 			bar:SetLabel(text)
 			bar:SetDuration(length)
 			bar:SetTimeVisibility(true)
@@ -192,6 +192,7 @@ do
 		display:SetMaxResize(1920, 20)
 		display:ClearAllPoints()
 		display:SetPoint(db.pos.p, _G.UIParent, db.pos.rp, db.pos.x, db.pos.y)
+		display.running = display.running or {}
 	
 		local bg = display:CreateTexture(nil, "PARENT")
 		bg:SetAllPoints(display)
@@ -254,7 +255,7 @@ do
 	
 	function updateAnchor(anchor)
 		anchor:SetWidth(db.width)
-		for bar in pairs(anchor.active) do
+		for bar in pairs(anchor.running) do
 			bar.candyBarBar:SetStatusBarTexture(media:Fetch("statusbar", db.texture))
 			bar.candyBarBackground:SetTexture(media:Fetch("statusbar", db.texture))
 			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
@@ -595,6 +596,7 @@ function Heatsink:OnEnable()
 	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.1)
 
 	icd.RegisterCallback(self, "InternalCooldowns_Proc")
+	candy.RegisterCallback(self, "LibCandyBar_Stop")
 
 	self:ScanSpells()
 	self:ScanPetSpells()
@@ -607,6 +609,7 @@ end
 function Heatsink:OnDisable()
 	self:UnregisterAllEvents()
 	icd.UnregisterCallback(self, "InternalCooldowns_Proc")
+	candy.UnregisterCallback(self, "LibCandyBar_Stop")
 end
 
 function Heatsink:UpdateProfile()
@@ -624,6 +627,13 @@ end
 
 function Heatsink:UpdateAnchor()
 	updateAnchor(anchor)
+end
+
+function Heatsink:LibCandyBar_Stop(callback, bar)
+	local a = bar:Get("anchor")
+	if a == anchor and anchor.running and anchor.running[bar] then
+		anchor.running[bar] = nil
+	end
 end
 
 function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration, source)
