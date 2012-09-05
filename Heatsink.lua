@@ -8,7 +8,7 @@ local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
 local RUNECD = 10
-local anchor, db, class, faction, petprefix
+local anchor, db, class, faction
 local player = {}
 local pet = {}
 local ipairs = _G.ipairs
@@ -143,7 +143,6 @@ do
 	end
 	
 	function startBar(text, start, duration, icon)
-		if start == 0 then return end
 		local length = start + duration - GetTime()
 		if getBar(text) then
 			for bar in pairs(anchor.active) do
@@ -686,7 +685,6 @@ function Heatsink:ScanPetSpells()
 	wipe(pet)
 	local check, pettype = HasPetSpells()
 	if check then 
-		petprefix = (pettype == "DEMON") and PET_TYPE_DEMON or PET_TYPE_PET
 		local i = 1
 		local continue = true
 		while continue do
@@ -731,7 +729,6 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 	if db.show.pet then
 		for index, spell in pairs(pet) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			spell = string.format("%s: %s", petprefix, spell)
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				local name, rank, icon = GetSpellInfo(spell)
 				startBar(spell, start, duration, icon)
