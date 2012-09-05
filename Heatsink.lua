@@ -44,6 +44,13 @@ local slots = {
 --		[(GetInventorySlotInfo("SecondaryHandSlot"))] = true,
 }
 
+local meta = {
+	[(GetSpellInfo(33891))] = (GetSpellInfo(106731)),  -- 33891 Tree of Life -- 106731 Incarnation
+	[(GetSpellInfo(102558))] = (GetSpellInfo(106731)), --102558 Son of Ursoc -- 106731 Incarnation
+	[(GetSpellInfo(102543))] = (GetSpellInfo(106731)), -- 102543 King of the Jungle -- 106731 Incarnation
+	[(GetSpellInfo(102560))] = (GetSpellInfo(106731))  -- 102560 Chosen of Elune -- 106731 Incarnation
+}
+
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
 local createAnchor, toggleAnchor, updateAnchor, runTest, startBar, stopBar, getBar
 do
@@ -598,9 +605,6 @@ function Heatsink:OnEnable()
 	icd.RegisterCallback(self, "InternalCooldowns_Proc")
 	candy.RegisterCallback(self, "LibCandyBar_Stop")
 
-	self:ScanSpells()
-	self:ScanPetSpells()
-	self:CheckPVP()
 	self:SPELL_UPDATE_COOLDOWN()
 	self:UNIT_INVENTORY_CHANGED()
 	self:BAG_UPDATE_COOLDOWN()
@@ -658,6 +662,7 @@ function Heatsink:ScanSpells()
 
 	for i = 1, spells do
 		local spell = GetSpellBookItemName(i, BOOKTYPE_SPELL)
+		spell = meta[spell] or spell
 		if spell then tinsert(player, spell) end
 	end
 
@@ -712,7 +717,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 			if class == "DEATHKNIGHT" and duration == RUNECD then enabled = -1 end
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
-			elseif getBar(name) then
+			elseif name and not meta[name] and getBar(name) then
 				stopBar(name)
 			end
 		end
