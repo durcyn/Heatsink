@@ -17,18 +17,11 @@ local unpack = _G.unpack
 local tostring = _G.tostring
 local tonumber = _G.tonumber
 local wipe = _G.wipe
-local format = _G.string.format
-local find = _G.string.find
 local random = _G.math.random
 local tinsert = _G.table.insert
-local tremove = _G.table.remove
 local tsort = _G.table.sort
 
 local defaulticon = "Interface\\Icons\\spell_nature_timestop"
-
-local petOverride = {
-	[(GetSpellInfo(119898))] = true,
-}
 
 local slots = {	
 		[(GetInventorySlotInfo("HeadSlot"))] = true, -- Engineering Mind Control stuff
@@ -146,22 +139,23 @@ do
 		local length = start + duration - GetTime()
 		if getBar(text) then
 			for bar in pairs(anchor.active) do
-				if bar.candyBarLabel:GetText() == text then
-					bar:SetDuration(length)
-					anchor.active[bar].start = start
+				if bar.text == text and bar.start ~= start then
+					stopBar(text)
+					startBar(text, start, duration, icon)
 				end
 			end
 		else
 			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
 			bar:Set("anchor", anchor)
 			anchor.active[bar] = {}
-			anchor.active[bar].start = start
 			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
 			bar:SetColor(unpack(db.color.bar))
 			bar.candyBarLabel:SetJustifyH(db.justify)
 			bar.candyBarLabel:SetTextColor(unpack(db.color.text))
 			bar.candyBarLabel:SetFont(media:Fetch("font", db.font), db.fontsize)
 			bar.candyBarDuration:SetFont(media:Fetch("font", db.font), db.fontsize)
+			bar.start = start
+			bar.text = text
 			bar:SetLabel(text)
 			bar:SetDuration(length)
 			bar:SetTimeVisibility(true)
@@ -601,7 +595,6 @@ function Heatsink:OnEnable()
 	self:RegisterBucketEvent("BAG_UPDATE_COOLDOWN", 0.1)
 
 	icd.RegisterCallback(self, "InternalCooldowns_Proc")
-	candy.RegisterCallback(self, "LibCandyBar_Stop")
 
 	self:ScanSpells()
 	self:ScanPetSpells()
@@ -614,7 +607,6 @@ end
 function Heatsink:OnDisable()
 	self:UnregisterAllEvents()
 	icd.UnregisterCallback(self, "InternalCooldowns_Proc")
-	candy.UnregisterCallback(self, "LibCandyBar_Stop")
 end
 
 function Heatsink:UpdateProfile()
@@ -632,13 +624,6 @@ end
 
 function Heatsink:UpdateAnchor()
 	updateAnchor(anchor)
-end
-
-function Heatsink:LibCandyBar_Stop(callback, bar)
-	local a = bar:Get("anchor")
-	if a == anchor and anchor.active and anchor.active[bar] then
-		anchor.active[bar] = nil
-	end
 end
 
 function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration, source)
@@ -703,7 +688,7 @@ function Heatsink:CheckPVP()
 			local time = GetPVPTimer()	
 			local start = GetTime()
 			startBar(PVP, start, time/1000, UnitIsPVPFreeForAll('player') and "FFA" or faction)
-		else
+		elseif getBar(PVP) then
 			stopBar(PVP)
 		end
 	end
@@ -713,13 +698,12 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
+			local name, rank, icon = GetSpellInfo(spell)
 			if class == "DEATHKNIGHT" and duration == RUNECD then enabled = -1 end
-			if HasPetSpells() and petOverride[spell] then enabled = -1  end
 			if enabled == 1 and duration >= db.min and duration <= db.max then
-				local name, rank, icon = GetSpellInfo(spell)
-				startBar(spell, start, duration, icon)
-			elseif duration == 0 then
-				stopBar(spell)
+				startBar(name, start, duration, icon)
+			elseif getBar(name) then
+				stopBar(name)
 			end
 		end
 	end
@@ -729,11 +713,11 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 	if db.show.pet then
 		for index, spell in pairs(pet) do
 			local start, duration, enabled = GetSpellCooldown(spell)
+			local name, rank, icon = GetSpellInfo(spell)
 			if enabled == 1 and duration >= db.min and duration <= db.max then
-				local name, rank, icon = GetSpellInfo(spell)
-				startBar(spell, start, duration, icon)
-			elseif duration == 0 and getBar(spell) then
-				stopBar(spell)
+				startBar(name, start, duration, icon)
+			elseif getBar(name) then
+				stopBar(name)
 			end
 		end
 	end
@@ -742,13 +726,13 @@ end
 function Heatsink:UNIT_INVENTORY_CHANGED()
 	if db.show.equipped then
 		for slot in pairs(slots) do
-			local id = GetInventoryItemID("player", slot)
+			local id = (GetInventoryItemID("player", slot))
 			if id then
 				local start, duration, enabled = GetInventoryItemCooldown("player", slot)
 				local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
 				if enabled == 1 and duration >= db.min and duration <= db.max then
 					startBar(name, start, duration, icon)
-				elseif duration == 0 then
+				elseif getBar(name) then 
 					stopBar(name)
 				end
 			end
@@ -759,13 +743,16 @@ end
 function Heatsink:BAG_UPDATE_COOLDOWN()
 	if db.show.inventory then
 		for bag = 0,4 do
-			local bagslots = GetContainerNumSlots(bag)
-			for slot = 1, bagslots do
-				local start, duration, enabled = GetContainerItemCooldown(bag,slot)
-				if enabled == 1 and duration >= db.min and duration <= db.max then
-					local icon, count, locked, quality, readable, lootable, link = GetContainerItemInfo(bag, slot)
-					local _,_,name = link:find("%|h%[(.-)%]%|h")
-					startBar(name, start, duration, icon)
+			for slot = 1, GetContainerNumSlots(bag) do
+				local id = (GetContainerItemID(bag,slot))
+				if id then
+					local start, duration, enabled = GetContainerItemCooldown(bag,slot)
+					local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
+					if enabled == 1 and duration >= db.min and duration <= db.max then
+						startBar(name, start, duration, icon)
+					elseif getBar(name) then
+						stopBar(name)
+					end
 				end
 			end
 		end
