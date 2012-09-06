@@ -86,16 +86,12 @@ local createAnchor, toggleAnchor, updateAnchor, runTest, startBar, stopBar, getB
 do
 	local GameTooltip = _G.GameTooltip
 
-	local function sortBars(a, b)
-		return (a.remaining > b.remaining and db.growup) and true or false
-	end
-
 	local function rearrangeBars(anchor)
 		local tmp = {}
 		for bar in pairs(anchor.running) do
 			tinsert(tmp, bar)
 		end
-		tsort(tmp, sortBars)
+		tsort(tmp, function(a,b) return a.remaining > b.remaining end)
 		local lastBar = nil
 		for i, bar in ipairs(tmp) do
 			bar:ClearAllPoints()
