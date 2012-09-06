@@ -10,7 +10,37 @@ local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
 local RUNECD = 10
 local anchor, db, class, faction
 local player = {}
+local active = {}
 local pet = {}
+
+local GameFontNormal = _G.GameFontNormal
+local BOOKTYPE_PET = _G.BOOKTYPE_PET
+local BOOKTYPE_SPELL = _G.BOOKTYPE_SPELL
+local PVP = _G.PVP
+local CreateFrame = _G.CreateFrame
+local GetFlyoutID = _G.GetFlyoutID
+local GetFlyoutInfo = _G.GetFlyoutInfo
+local GetFlyoutSlotInfo = _G.GetFlyoutSlotInfo
+local GetNumFlyouts = _G.GetNumFlyouts
+local GetPVPTimer = _G.GetPVPTimer
+local GetSpecialization = _G.GetSpecialization
+local GetSpellBookItemName = _G.GetSpellBookItemName
+local GetSpellTabInfo = _G.GetSpellTabInfo
+local GetTime = _G.GetTime
+local HasPetSpells = _G.HasPetSpells
+local GetSpellInfo = _G.GetSpellInfo
+local GetSpellCooldown = _G.GetSpellCooldown
+local GetItemInfo = _G.GetItemInfo
+local GetContainerNumSlots = _G.GetContainerNumSlots
+local GetContainerItemID = _G.GetContainerItemID
+local GetContainerItemCooldown = _G.GetContainerItemCooldown
+local GetInventoryItemID = _G.GetInventoryItemID
+local GetInventoryItemInfo = _G.GetInventoryItemInfo
+local GetInventoryItemCooldown = _G.GetInventoryItemCooldown
+local GetInventorySlotInfo = _G.GetInventorySlotInfo
+local IsPVPTimerRunning = _G.IsPVPTimerRunning
+local UnitFactionGroup = _G.UnitFactionGroup
+
 local ipairs = _G.ipairs
 local pairs = _G.pairs
 local unpack = _G.unpack
@@ -199,7 +229,6 @@ do
 		display:SetMaxResize(1920, 20)
 		display:ClearAllPoints()
 		display:SetPoint(db.pos.p, _G.UIParent, db.pos.rp, db.pos.x, db.pos.y)
-		display.running = display.running or {}
 	
 		local bg = display:CreateTexture(nil, "PARENT")
 		bg:SetAllPoints(display)
@@ -255,7 +284,7 @@ do
 		display:SetScript("OnSizeChanged", onResize)
 		display:SetScript("OnDragStart", onDragStart)
 		display:SetScript("OnDragStop", onDragStop)
-		display.active = {}
+		display.running = {}
 		display:Hide()
 		return display
 	end
@@ -662,6 +691,7 @@ function Heatsink:ScanSpells()
 
 	for i = 1, spells do
 		local spell = GetSpellBookItemName(i, BOOKTYPE_SPELL)
+		GetSpellInfo(spell) -- force a cache update
 		spell = meta[spell] or spell
 		if spell then tinsert(player, spell) end
 	end
@@ -673,7 +703,7 @@ function Heatsink:ScanSpells()
 			for j = 1, spells do
 				local id, known = GetFlyoutSlotInfo(n,j)
 				if known then
-					local spell = (GetSpellInfo(spellid))
+					local spell = (GetSpellInfo(id))
 					if spell then tinsert(player,spell) end
 				end
 			end					
@@ -702,7 +732,7 @@ function Heatsink:CheckPVP()
 		if IsPVPTimerRunning() then
 			local time = GetPVPTimer()	
 			local start = GetTime()
-			startBar(PVP, start, time/1000, UnitIsPVPFreeForAll('player') and "FFA" or faction)
+			startBar(PVP, start, time/1000, faction)
 		elseif getBar(PVP) then
 			stopBar(PVP)
 		end
@@ -714,6 +744,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
 			local name, rank, icon = GetSpellInfo(spell)
+			name = meta[name] or name
 			if class == "DEATHKNIGHT" and duration == RUNECD then enabled = -1 end
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
