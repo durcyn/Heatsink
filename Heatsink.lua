@@ -41,6 +41,7 @@ local GetRuneCount = _G.GetRuneCount
 local GetRuneCooldown = _G.GetRuneCooldown
 local IsPVPTimerRunning = _G.IsPVPTimerRunning
 local UnitFactionGroup = _G.UnitFactionGroup
+local UnitClass = _G.UnitClass
 
 local ipairs = _G.ipairs
 local pairs = _G.pairs
@@ -615,6 +616,7 @@ function Heatsink:OnInitialize()
 
 	local ufg = UnitFactionGroup("player")
 	faction = "Interface\\Addons\\Heatsink\\Icons\\"..ufg.."_active"
+	class = select(2, UnitClass("player"))
 end
 
 function Heatsink:OnEnable()
@@ -737,15 +739,13 @@ function Heatsink:CheckPVP()
 	end
 end
 
-function Heatsink:IsRuneCD(start, duration)
+function Heatsink:RuneCD(input)
 	if class ~= "DEATHKNIGHT" then return end
-	local isrune = false
-	for i=1,6 do
-		local rune = GetRuneCount(i)
-		local runestart, runeduration, runeenabled = GetRuneCooldown(i)
-		if rune == 0 and start == runestart and duration == runeduration then isrune = true end
+	for i = 1, 6 do  
+		local start, duration, enabled = GetRuneCooldown(i)
+		if input == duration then return true end
 	end
-	return isrune
+	return false
 end
 
 function Heatsink:SPELL_UPDATE_COOLDOWN()
@@ -754,7 +754,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 			local start, duration, enabled = GetSpellCooldown(spell)
 			local name, rank, icon = GetSpellInfo(spell)
 			name = meta[name] or name
-			if self:IsRuneCD(start, duration) then return end
+			if class == "DEATHKNIGHT" and self:RuneCD(duration) then return end
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
 			elseif name and not meta[name] and getBar(name) then
