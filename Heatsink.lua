@@ -79,7 +79,8 @@ local meta = {
 	[(GetSpellInfo(33891))] = (GetSpellInfo(106731)),  -- 33891 Tree of Life -- 106731 Incarnation
 	[(GetSpellInfo(102558))] = (GetSpellInfo(106731)), --102558 Son of Ursoc -- 106731 Incarnation
 	[(GetSpellInfo(102543))] = (GetSpellInfo(106731)), -- 102543 King of the Jungle -- 106731 Incarnation
-	[(GetSpellInfo(102560))] = (GetSpellInfo(106731))  -- 102560 Chosen of Elune -- 106731 Incarnation
+	[(GetSpellInfo(102560))] = (GetSpellInfo(106731)),  -- 102560 Chosen of Elune -- 106731 Incarnation
+	[(GetSpellInfo(102355))] = (GetSpellInfo(770))      -- 102355 Faerie Swarm -- 770 Faerie Fire
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
