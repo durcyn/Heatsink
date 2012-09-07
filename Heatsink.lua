@@ -7,7 +7,6 @@ local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
-local RUNECD = 10
 local anchor, db, class, faction
 local player = {}
 local active = {}
@@ -38,6 +37,8 @@ local GetInventoryItemID = _G.GetInventoryItemID
 local GetInventoryItemInfo = _G.GetInventoryItemInfo
 local GetInventoryItemCooldown = _G.GetInventoryItemCooldown
 local GetInventorySlotInfo = _G.GetInventorySlotInfo
+local GetRuneCount = _G.GetRuneCount
+local GetRuneCooldown = _G.GetRuneCooldown
 local IsPVPTimerRunning = _G.IsPVPTimerRunning
 local UnitFactionGroup = _G.UnitFactionGroup
 
@@ -735,13 +736,24 @@ function Heatsink:CheckPVP()
 	end
 end
 
+function Heatsink:IsRuneCD(start, duration)
+	if class ~= "DEATHKNIGHT" then return end
+	local isrune = false
+	for i=1,6 do
+		local rune = GetRuneCount(i)
+		local runestart, runeduration, runeenabled = GetRuneCooldown(i)
+		if rune == 0 and start == runestart and duration == runeduration then isrune = true end
+	end
+	return isrune
+end
+
 function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
 			local name, rank, icon = GetSpellInfo(spell)
 			name = meta[name] or name
-			if class == "DEATHKNIGHT" and duration == RUNECD then enabled = -1 end
+			if self:IsRuneCD(start, duration) then return end
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
 			elseif name and not meta[name] and getBar(name) then
