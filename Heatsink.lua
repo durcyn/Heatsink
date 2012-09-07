@@ -7,10 +7,8 @@ local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
-local anchor, db, class, faction
-local player = {}
-local active = {}
-local pet = {}
+local anchor, db, class, faction, lockout
+local player, pet = {}, {}
 
 local GameFontNormal = _G.GameFontNormal
 local BOOKTYPE_PET = _G.BOOKTYPE_PET
@@ -617,6 +615,7 @@ function Heatsink:OnInitialize()
 	local ufg = UnitFactionGroup("player")
 	faction = "Interface\\Addons\\Heatsink\\Icons\\"..ufg.."_active"
 	class = select(2, UnitClass("player"))
+	lockout = 0
 end
 
 function Heatsink:OnEnable()
@@ -625,7 +624,7 @@ function Heatsink:OnEnable()
 	self:RegisterEvent("PET_BAR_HIDE", "ScanPetSpells")
 	self:RegisterEvent("PLAYER_FLAGS_CHANGED", "CheckPVP")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "CheckPVP")
-
+	self:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "player")
 	self:RegisterBucketEvent("SPELL_UPDATE_COOLDOWN", 0.1)
 	self:RegisterBucketEvent("PET_BAR_UPDATE_COOLDOWN", 0.1)
 	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.1)
@@ -748,13 +747,26 @@ function Heatsink:RuneCD(input)
 	return false
 end
 
+function Heatsink:LockoutReset()
+	lockout = 0
+end
+
+function Heatsink:UNIT_SPELLCAST_INTERRUPTED(unit, spell, rank, sequence, spellid)
+	if unit ~= "player" then return end
+	local start, duration, enabled = GetSpellCooldown(spell)
+	if duration == 0 then return end
+	lockout = duration
+	self:ScheduleTimer("LockoutReset", duration)
+end
+
 function Heatsink:SPELL_UPDATE_COOLDOWN()
-	if db.show.spells then
+	if db.show.spells then 
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
+			if duration == lockout then return end
+			if class == "DEATHKNIGHT" and self:RuneCD(duration) then return end
 			local name, rank, icon = GetSpellInfo(spell)
 			name = meta[name] or name
-			if class == "DEATHKNIGHT" and self:RuneCD(duration) then return end
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
 			elseif name and not meta[name] and getBar(name) then
