@@ -615,7 +615,7 @@ function Heatsink:OnInitialize()
 	local ufg = UnitFactionGroup("player")
 	faction = "Interface\\Addons\\Heatsink\\Icons\\"..ufg.."_active"
 	class = select(2, UnitClass("player"))
-	lockout = 0
+	lockout = nil
 end
 
 function Heatsink:OnEnable()
@@ -748,13 +748,16 @@ function Heatsink:RuneCD(input)
 end
 
 function Heatsink:LockoutReset()
-	lockout = 0
+	lockout = nil
 end
 
 function Heatsink:UNIT_SPELLCAST_INTERRUPTED(unit, spell, rank, sequence, spellid)
 	if unit ~= "player" then return end
 	local start, duration, enabled = GetSpellCooldown(spell)
-	if duration == 0 then return end
+	if duration == 0 then
+		lockout = nil
+		return
+	end
 	lockout = duration
 	self:ScheduleTimer("LockoutReset", duration)
 end
@@ -763,7 +766,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then 
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if duration == lockout then return end
+			if lockout and lockout == duration then return end
 			if class == "DEATHKNIGHT" and self:RuneCD(duration) then return end
 			local name, rank, icon = GetSpellInfo(spell)
 			name = meta[name] or name
