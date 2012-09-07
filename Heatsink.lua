@@ -757,9 +757,10 @@ function Heatsink:UNIT_SPELLCAST_INTERRUPTED(unit, spell, rank, sequence, spelli
 	if duration == 0 then
 		lockout = nil
 		return
+	else
+		lockout = duration
+		self:ScheduleTimer("LockoutReset", duration)
 	end
-	lockout = duration
-	self:ScheduleTimer("LockoutReset", duration)
 end
 
 function Heatsink:SPELL_UPDATE_COOLDOWN()
