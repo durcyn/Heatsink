@@ -13,6 +13,7 @@ local player, pet = {}, {}
 local GameFontNormal = _G.GameFontNormal
 local BOOKTYPE_PET = _G.BOOKTYPE_PET
 local BOOKTYPE_SPELL = _G.BOOKTYPE_SPELL
+local INTERRUPTED = _G.INTERRUPTED
 local PVP = _G.PVP
 local CreateFrame = _G.CreateFrame
 local GetFlyoutID = _G.GetFlyoutID
@@ -760,6 +761,7 @@ function Heatsink:UNIT_SPELLCAST_INTERRUPTED(unit, spell, rank, sequence, spelli
 	else
 		lockout = duration
 		self:ScheduleTimer("LockoutReset", duration)
+		startBar(INTERRUPTED, start, duration, "Interface\\Icons\\Spell_Holy_Silence")
 	end
 end
 
