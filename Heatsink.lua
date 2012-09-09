@@ -691,13 +691,12 @@ function Heatsink:ScanSpells()
 	local spells = offset + last
 
 	for i = 1, spells do
+		local spell = GetSpellBookItemName(i, BOOKTYPE_SPELL)
 		local _, id = GetSpellBookItemInfo(i, BOOKTYPE_SPELL)
 		local valid = IsPlayerSpell(id)
-		if not valid then return end
-		local spell = GetSpellBookItemName(i, BOOKTYPE_SPELL)
 		GetSpellInfo(spell) -- force a cache update
 		spell = meta[spell] or spell
-		if spell then tinsert(player, spell) end
+		if spell and valid then tinsert(player, spell) end
 	end
 
 	for i = 1, GetNumFlyouts() do
