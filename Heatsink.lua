@@ -26,6 +26,7 @@ local GetSpellBookItemName = _G.GetSpellBookItemName
 local GetSpellTabInfo = _G.GetSpellTabInfo
 local GetTime = _G.GetTime
 local HasPetSpells = _G.HasPetSpells
+local IsPlayerSpell = _G.IsPlayerSpell
 local GetSpellInfo = _G.GetSpellInfo
 local GetSpellCooldown = _G.GetSpellCooldown
 local GetItemInfo = _G.GetItemInfo
@@ -690,6 +691,9 @@ function Heatsink:ScanSpells()
 	local spells = offset + last
 
 	for i = 1, spells do
+		local _, id = GetSpellBookItemInfo(i, BOOKTYPE_SPELL)
+		local valid = IsPlayerSpell(id)
+		if not valid then return end
 		local spell = GetSpellBookItemName(i, BOOKTYPE_SPELL)
 		GetSpellInfo(spell) -- force a cache update
 		spell = meta[spell] or spell
