@@ -84,6 +84,11 @@ local meta = {
 	[(GetSpellInfo(102355))] = (GetSpellInfo(770))      -- 102355 Faerie Swarm -- 770 Faerie Fire
 }
 
+local extra = { -- doesn't appear in a spellbook scan, not worth scanning tradeskills for.
+	[(GetSpellInfo(80451))] = true, -- Survey
+	[(GetSpellInfo(818))] = true -- Cooking Fire
+}
+
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
 local createAnchor, toggleAnchor, updateAnchor, runTest, startBar, stopBar, getBar
 do
@@ -684,6 +689,11 @@ end
 
 function Heatsink:ScanSpells()
 	wipe(player)
+
+	for k,v in pairs(extra) do
+		if (GetSpellInfo(k)) then tinsert(player, k) end
+	end
+
 	local tabs = 1
 	if GetSpecialization() ~= 0 then tabs = 2 end
 			
@@ -778,7 +788,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 			name = meta[name] or name
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
-			elseif name and not meta[name] and getBar(name) then
+			elseif name and duration == 0 and getBar(name) and not meta[name] then
 				stopBar(name)
 			end
 		end
@@ -792,7 +802,7 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 			local name, rank, icon = GetSpellInfo(spell)
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
-			elseif getBar(name) then
+			elseif name and duration == 0 and getBar(name) then
 				stopBar(name)
 			end
 		end
@@ -808,7 +818,7 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 				local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
 				if enabled == 1 and duration >= db.min and duration <= db.max then
 					startBar(name, start, duration, icon)
-				elseif getBar(name) then 
+				elseif name and duration == 0 and getBar(name) then 
 					stopBar(name)
 				end
 			end
@@ -826,7 +836,7 @@ function Heatsink:BAG_UPDATE_COOLDOWN()
 					local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
 					if enabled == 1 and duration >= db.min and duration <= db.max then
 						startBar(name, start, duration, icon)
-					elseif getBar(name) then
+					elseif name and duration == 0 and getBar(name) then
 						stopBar(name)
 					end
 				end
