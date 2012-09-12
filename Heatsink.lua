@@ -765,24 +765,23 @@ function Heatsink:LockoutReset()
 	lockout = nil
 end
 
-function Heatsink:UNIT_SPELLCAST_INTERRUPTED(unit, spell, rank, sequence, spellid)
-	if unit ~= "player" then return end
-	local start, duration, enabled = GetSpellCooldown(spell)
-	if duration == 0 then
-		lockout = nil
-		return
-	else
-		lockout = duration
-		self:ScheduleTimer("LockoutReset", duration)
-		startBar(INTERRUPTED, start, duration, "Interface\\Icons\\Spell_Holy_Silence")
-	end
+function Heatsink:UNIT_SPELLCAST_INTERRUPTED(unit, ...) 
+	if unit == "player" then lockout = true end
 end
 
 function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then 
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if lockout and lockout == duration then return end
+			if lockout == true then
+				self:ScheduleTimer("LockoutReset", duration)
+				startBar(INTERRUPTED, start, duration, "Interface\\Icons\\Spell_Holy_Silence")
+				lockout = duration
+				return
+			elseif lockout == duration then
+				return
+			end
+
 			if class == "DEATHKNIGHT" and self:RuneCD(duration) then return end
 			local name, rank, icon = GetSpellInfo(spell)
 			name = meta[name] or name
