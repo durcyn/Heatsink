@@ -86,7 +86,8 @@ local meta = {
 
 local extra = { -- doesn't appear in a spellbook scan, not worth scanning tradeskills for.
 	[(GetSpellInfo(80451))] = true, -- Survey
-	[(GetSpellInfo(818))] = true -- Cooking Fire
+	[(GetSpellInfo(818))] = true, -- Cooking Fire
+	[(GetSpellInfo(74497))] = true -- Lifeblood
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
