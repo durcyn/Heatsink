@@ -9,6 +9,7 @@ local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
 local anchor, db, class, faction, lockout
 local player, pet = {}, {}
+local RUNECD = 10
 
 local GameFontNormal = _G.GameFontNormal
 local BOOKTYPE_PET = _G.BOOKTYPE_PET
@@ -88,6 +89,10 @@ local extra = { -- doesn't appear in a spellbook scan, not worth scanning trades
 	[(GetSpellInfo(80451))] = true, -- Survey
 	[(GetSpellInfo(818))] = true, -- Cooking Fire
 	[(GetSpellInfo(74497))] = true -- Lifeblood
+}
+
+local runewhitelist = {
+	[(GetSpellInfo(47528))] = true, -- Mind Freeze
 }
 
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
@@ -753,15 +758,6 @@ function Heatsink:CheckPVP()
 	end
 end
 
-function Heatsink:RuneCD(input)
-	if class ~= "DEATHKNIGHT" then return end
-	for i = 1, 6 do  
-		local start, duration, enabled = GetRuneCooldown(i)
-		if input == duration then return true end
-	end
-	return false
-end
-
 function Heatsink:LockoutReset()
 	lockout = nil
 end
@@ -783,7 +779,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 				return
 			end
 
-			if class == "DEATHKNIGHT" and self:RuneCD(duration) then return end
+			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then return end
 			local name, rank, icon = GetSpellInfo(spell)
 			name = meta[name] or name
 			if enabled == 1 and duration >= db.min and duration <= db.max then
