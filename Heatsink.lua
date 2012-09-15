@@ -7,7 +7,8 @@ local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
-local anchor, db, class, faction, lockout
+local anchor, db, class, faction
+local lockout = false
 local player, pet = {}, {}
 local RUNECD = 10
 
@@ -628,7 +629,6 @@ function Heatsink:OnInitialize()
 	local ufg = UnitFactionGroup("player")
 	faction = "Interface\\Addons\\Heatsink\\Icons\\"..ufg.."_active"
 	class = select(2, UnitClass("player"))
-	lockout = nil
 end
 
 function Heatsink:OnEnable()
@@ -759,7 +759,7 @@ function Heatsink:CheckPVP()
 end
 
 function Heatsink:LockoutReset()
-	lockout = nil
+	lockout = false
 end
 
 function Heatsink:UNIT_SPELLCAST_INTERRUPTED(unit, ...) 
@@ -770,12 +770,13 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then 
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if lockout == true then
+			if lockout and lockout == duration then
+				return
+			elseif lockout == true then
+				if duration == 0 then lockout = false break end
 				self:ScheduleTimer("LockoutReset", duration)
 				startBar(INTERRUPTED, start, duration, "Interface\\Icons\\Spell_Holy_Silence")
 				lockout = duration
-				return
-			elseif lockout == duration then
 				return
 			end
 
