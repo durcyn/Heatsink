@@ -92,10 +92,6 @@ local extra = { -- doesn't appear in a spellbook scan, not worth scanning trades
 	[(GetSpellInfo(74497))] = true -- Lifeblood
 }
 
-local runewhitelist = {
-	[(GetSpellInfo(47528))] = true, -- Mind Freeze
-}
-
 -- Credit to the BigWigs team (Rabbit, Ammo, et al) for the anchor code 
 local createAnchor, toggleAnchor, updateAnchor, runTest, startBar, stopBar, getBar
 do
@@ -780,7 +776,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 				return
 			end
 
-			if class == "DEATHKNIGHT" and duration == RUNECD and not runewhitelist[spell] then return end
+			if class == "DEATHKNIGHT" and duration == RUNECD then return end
 			local name, rank, icon = GetSpellInfo(spell)
 			name = meta[name] or name
 			if enabled == 1 and duration >= db.min and duration <= db.max then
