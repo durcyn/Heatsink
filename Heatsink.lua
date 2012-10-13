@@ -811,8 +811,6 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 				local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
 				if enabled == 1 and duration >= db.min and duration <= db.max then
 					startBar(name, start, duration, icon)
-				elseif name and duration == 0 and getBar(name) then 
-					stopBar(name)
 				end
 			end
 		end
