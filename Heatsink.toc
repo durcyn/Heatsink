@@ -27,4 +27,3 @@ libs\LibInternalCooldowns-1.0\lib.xml
 
 Locale\Locale.xml
 Heatsink.lua
-
