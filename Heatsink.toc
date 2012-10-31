@@ -5,7 +5,7 @@
 ## X-Credits: Evl for the original Hourglass, Nirek & Mist for their enhancements, Rabbit and Ammo for LCB-3, Antiarc for LibICD.
 ## SavedVariables: HeatsinkDB
 ## OptionalDeps: Ace3, AceGUI-3.0-SharedMediaWidgets, LibCandyBar-3.0, LibSharedMedia-3.0, LibInternalCooldowns-1.0
- 
+
 #@no-lib-strip@
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.xml

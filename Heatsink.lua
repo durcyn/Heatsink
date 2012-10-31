@@ -1,8 +1,9 @@
 local _G = getfenv(0)
 local LibStub = _G.LibStub
-local Heatsink = LibStub("AceAddon-3.0"):NewAddon("Heatsink", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
+local ADDON_NAME, ADDON_TABLE = ...
+local addon = LibStub("AceAddon-3.0"):NewAddon(ADDON_NAME, "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
 
-local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale("Heatsink")
+local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(ADDON_NAME)
 local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
@@ -213,7 +214,7 @@ do
 	function runTest(anchor)
 		local duration = random(10, 45)
 		local start = GetTime()
-		startBar("Heatsink "..duration, start, duration, defaulticon)
+		startBar(ADDON_NAME..duration, start, duration, defaulticon)
 	end
 	
 	function toggleAnchor(anchor)
@@ -260,7 +261,7 @@ do
 		drag:SetAlpha(0.5)
 	
 		local tex = drag:CreateTexture(nil, "BACKGROUND")
-		tex:SetTexture("Interface\\AddOns\\Heatsink\\Textures\\draghandle")
+		tex:SetTexture("Interface\\AddOns\\"..ADDON_NAME.."\\Textures\\draghandle")
 		tex:SetWidth(16)
 		tex:SetHeight(16)
 		tex:SetBlendMode("ADD")
@@ -275,7 +276,7 @@ do
 		test:SetScript("OnEnter", onControlEnter)
 		test:SetScript("OnLeave", onControlLeave)
 		test:SetScript("OnClick", function() runTest() end)
-		test:SetNormalTexture("Interface\\AddOns\\Heatsink\\Textures\\test")
+		test:SetNormalTexture("Interface\\AddOns\\"..ADDON_NAME.."\\Textures\\test")
 	
 		local close = CreateFrame("Button", nil, display)
 		close:SetPoint("BOTTOMLEFT", test, "BOTTOMRIGHT", 4, 0)
@@ -286,7 +287,7 @@ do
 		close:SetScript("OnEnter", onControlEnter)
 		close:SetScript("OnLeave", onControlLeave)
 		close:SetScript("OnClick", function() toggleAnchor(anchor) end)
-		close:SetNormalTexture("Interface\\AddOns\\Heatsink\\Textures\\close")
+		close:SetNormalTexture("Interface\\AddOns\\"..ADDON_NAME.."\\Textures\\close")
 	
 		display:SetScript("OnSizeChanged", onResize)
 		display:SetScript("OnDragStart", onDragStart)
@@ -358,7 +359,7 @@ local options = {
 			name = L["Toggle anchor"],
 			desc = L["Toggle the bar anchor frame"],
 			func = function()
-					Heatsink:ToggleAnchor()
+					addon:ToggleAnchor()
 				end,
 			order = 10,
 		},
@@ -367,7 +368,7 @@ local options = {
 			name = L["Test"],
 			desc = L["Test bars"],
 			func = function()
-					Heatsink:RunTest()
+					addon:RunTest()
 				end,
 			order = 20,
 		},
@@ -381,8 +382,8 @@ local options = {
 					name = L["Minimum duration"],
 					desc = L["Minimum cooldown duration to display"],
 					pattern = "%d+",
-					get = function() return tostring(Heatsink.db.profile.min) end,
-					set = function(info, v) Heatsink.db.profile.min = tonumber(v) end,
+					get = function() return tostring(addon.db.profile.min) end,
+					set = function(info, v) addon.db.profile.min = tonumber(v) end,
 					order = 1,
 				},
 				max = {
@@ -390,8 +391,8 @@ local options = {
 					name = L["Maximum duration"],
 					desc = L["Maximum cooldown duration to display"],
 					pattern = "%d+",
-					get = function() return tostring(Heatsink.db.profile.max) end,
-					set = function(info, v) Heatsink.db.profile.max = tonumber(v) end,
+					get = function() return tostring(addon.db.profile.max) end,
+					set = function(info, v) addon.db.profile.max = tonumber(v) end,
 					order = 2, 
 				},
 			},
@@ -407,10 +408,10 @@ local options = {
 					order = 10,
 					name = L["Grow upwards"],
 					desc = L["Toggle bars grow upwards/downwards from anchor"],
-					get = function () return Heatsink.db.profile.growup end,
+					get = function () return addon.db.profile.growup end,
 					set = function (info, v)
-							Heatsink.db.profile.growup = v
-							Heatsink:UpdateAnchor()
+							addon.db.profile.growup = v
+							addon:UpdateAnchor()
 						end,
 				},
 				scale = {
@@ -418,10 +419,10 @@ local options = {
 					order = 20,
 					name = L["Scale"],
 					desc = L["Set the scale of the bars"],
-					get = function() return Heatsink.db.profile.scale end,
+					get = function() return addon.db.profile.scale end,
 					set = function(info, v)
-							Heatsink.db.profile.scale = v
-							Heatsink:UpdateAnchor()
+							addon.db.profile.scale = v
+							addon:UpdateAnchor()
 						end,
 					min = 0.1,
 					max = 5,
@@ -435,10 +436,10 @@ local options = {
 					name = L["Texture"],
 					desc = L["Set the texture for the timer bars"],
 					values = AceGUIWidgetLSMlists.statusbar,
-					get = function() return Heatsink.db.profile.texture end,
+					get = function() return addon.db.profile.texture end,
 					set = function(i,v)
-							Heatsink.db.profile.texture = v
-							Heatsink:UpdateAnchor()
+							addon.db.profile.texture = v
+							addon:UpdateAnchor()
 						end,
 				},
 				barcolor = {
@@ -447,10 +448,10 @@ local options = {
 					order = 40,
 					name = L["Bar Color"],
 					desc = L["Set the bar color"],
-					get = function() return unpack(Heatsink.db.profile.color.bar) end,
+					get = function() return unpack(addon.db.profile.color.bar) end,
 					set = function(i,r,g,b,a)
-							Heatsink.db.profile.color.bar = { r, g, b, a }
-							Heatsink:UpdateAnchor()
+							addon.db.profile.color.bar = { r, g, b, a }
+							addon:UpdateAnchor()
 						end,
 				},
 				bgcolor = {
@@ -459,10 +460,10 @@ local options = {
 					order = 50,
 					name = L["Background Color"],
 					desc = L["Set the background color"],
-					get = function() return unpack(Heatsink.db.profile.color.bg) end,
+					get = function() return unpack(addon.db.profile.color.bg) end,
 					set = function(i,r,g,b,a)
-							Heatsink.db.profile.color.bg = { r, g, b, a }
-							Heatsink:UpdateAnchor()
+							addon.db.profile.color.bg = { r, g, b, a }
+							addon:UpdateAnchor()
 						end,
 				},
 				font = {
@@ -472,10 +473,10 @@ local options = {
 					name = L["Font"],
 					desc = L["Set the font"],
 					values = AceGUIWidgetLSMlists.font,
-					get = function() return Heatsink.db.profile.font end,
+					get = function() return addon.db.profile.font end,
 					set = function(i,v)
-							Heatsink.db.profile.font = v
-							Heatsink:UpdateAnchor()
+							addon.db.profile.font = v
+							addon:UpdateAnchor()
 						end,
 				},
 				fontsize = {
@@ -486,10 +487,10 @@ local options = {
 					min = 8,
 					max = 24,
 					step = 1,
-					get = function() return Heatsink.db.profile.fontsize end,
+					get = function() return addon.db.profile.fontsize end,
 					set = function(i,v)
-							Heatsink.db.profile.fontsize = v
-							Heatsink:UpdateAnchor()
+							addon.db.profile.fontsize = v
+							addonUpdateAnchor()
 						end,
 				},
 				justify = {
@@ -498,10 +499,10 @@ local options = {
 					name = L["Justify"],
 					desc = L["Set the text position"],
 					values = {["left"]="LEFT", ["center"]="CENTER"},
-					get = function() return Heatsink.db.profile.justify end,
+					get = function() return addon.db.profile.justify end,
 					set = function(i,v)
-							Heatsink.db.profile.justify = v
-							Heatsink:UpdateAnchor()
+							addon.db.profile.justify = v
+							addonUpdateAnchor()
 						end,
 				},
 				textcolor = {
@@ -509,10 +510,10 @@ local options = {
 					order = 90,
 					name = L["Text Color"],
 					desc = L["Set the text color"],
-					get = function() return unpack(Heatsink.db.profile.color.text) end,
+					get = function() return unpack(addon.db.profile.color.text) end,
 					set = function(i,r,g,b,a)
-							Heatsink.db.profile.color.text = { r, g, b, a }
-							Heatsink:UpdateAnchor()
+							addon.db.profile.color.text = { r, g, b, a }
+							addonUpdateAnchor()
 						end,
 				},
 			},
@@ -531,9 +532,9 @@ local options = {
 							type = "toggle",
 							name = L["Enable player spells"],
 							desc = L["Toggle showing player spells cooldowns"],
-							get = function () return Heatsink.db.profile.show.spells end,
+							get = function () return addon.db.profile.show.spells end,
 							set = function (info, v)
-									Heatsink.db.profile.show.spells = v
+									addon.db.profile.show.spells = v
 								end,
 							order = 10,
 						},
@@ -541,12 +542,12 @@ local options = {
 							type = "toggle",
 							name = L["Show school"],
 							desc = L["Spawns single bar if a school is locked out"],
-							get = function () return Heatsink.db.profile.show.school end,
+							get = function () return addon.db.profile.show.school end,
 							set = function (info, v)
-									Heatsink.db.profile.show.school = v
+									addon.db.profile.show.school = v
 								end,
 							disabled = function ()
-									   return not Heatsink.db.profile.show.school
+									   return not addon.db.profile.show.school
 								   end,
 							order = 100,
 						},
@@ -557,9 +558,9 @@ local options = {
 					type = "toggle",
 					name = L["Pet spells"],
 					desc = L["Toggle showing pet cooldowns"],
-					get = function () return Heatsink.db.profile.show.pet end,
+					get = function () return addon.db.profile.show.pet end,
 					set = function (info, v)
-						Heatsink.db.profile.show.pet = v
+						addon.db.profile.show.pet = v
 					end,
 					order = 20,
 				},
@@ -567,10 +568,10 @@ local options = {
 					type = "toggle",
 					name = L["Equipped items"],
 					desc = L["Toggle showing equipped items cooldowns"],
-					get = function () return Heatsink.db.profile.show.equipped end,
+					get = function () return addon.db.profile.show.equipped end,
 					set = function (info, v)
-						Heatsink.db.profile.show.equipped = v
-						Heatsink:UNIT_INVENTORY_CHANGED()
+						addon.db.profile.show.equipped = v
+						addonUNIT_INVENTORY_CHANGED()
 					end,
 					order = 30,
 				},
@@ -578,10 +579,10 @@ local options = {
 					type = "toggle",
 					name = L["Inventory items"],
 					desc = L["Toggle showing inventory items cooldowns"],
-					get = function () return Heatsink.db.profile.show.inventory end,
+					get = function () return addon.db.profile.show.inventory end,
 					set = function (info, v)
-						Heatsink.db.profile.show.inventory = v
-						Heatsink:BAG_UPDATE_COOLDOWN()
+						addon.db.profile.show.inventory = v
+						addonBAG_UPDATE_COOLDOWN()
 					end,
 					order = 40,
 				},
@@ -589,9 +590,9 @@ local options = {
 					type = "toggle",
 					name = L["Internal Cooldowns"],
 					desc = L["Toggle showing item internal proc cooldowns"],
-					get = function () return Heatsink.db.profile.show.proc end,
+					get = function () return addon.db.profile.show.proc end,
 					set = function (info, v)
-						Heatsink.db.profile.show.proc = v
+						addon.db.profile.show.proc = v
 					end,
 					order = 50,
 				},
@@ -599,9 +600,9 @@ local options = {
 					type = "toggle",
 					name = L["PVP Timer"],
 					desc = L["Toggle showing PVP flag timer"],
-					get = function () return Heatsink.db.profile.show.pvptimer end,
+					get = function () return addon.db.profile.show.pvptimer end,
 					set = function (info, v)
-						Heatsink.db.profile.show.pvptimer = v
+						addon.db.profile.show.pvptimer = v
 					end,
 					order = 50,
 				},
@@ -610,24 +611,24 @@ local options = {
 	},
 }
 
-function Heatsink:OnInitialize()
+function addon:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New("HeatsinkDB", defaults, "Default")
 	db = self.db.profile
 	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateProfile")
 	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateProfile")
 	self.db.RegisterCallback(self, "OnProfileReset", "UpdateProfile")
-	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Heatsink", options)
-	options.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(Heatsink.db)
-	local optFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Heatsink")
-	LibStub("AceConsole-3.0"):RegisterChatCommand( "heatsink", function() InterfaceOptionsFrame_OpenToCategory("Heatsink") end )
-	anchor = createAnchor("HeatsinkAnchor", "Heatsink")
+	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(ADDON_NAME, options)
+	options.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(addon.db)
+	local optFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(ADDON_NAME)
+	LibStub("AceConsole-3.0"):RegisterChatCommand( string.lower(ADDON_NAME), function() InterfaceOptionsFrame_OpenToCategory(ADDON_NAME) end )
+	anchor = createAnchor(ADDON_NAME.."Anchor", ADDON_NAME)
 
 	local ufg = UnitFactionGroup("player")
-	faction = "Interface\\Addons\\Heatsink\\Icons\\"..ufg.."_active"
+	faction = "Interface\\Addons\\"..ADDON_NAME.."\\Icons\\"..ufg.."_active"
 	class = select(2, UnitClass("player"))
 end
 
-function Heatsink:OnEnable()
+function addon:OnEnable()
 	self:RegisterEvent("SPELLS_CHANGED", "ScanSpells")
 	self:RegisterEvent("PET_BAR_UPDATE", "ScanPetSpells")
 	self:RegisterEvent("PET_BAR_HIDE", "ScanPetSpells")
@@ -647,37 +648,37 @@ function Heatsink:OnEnable()
 	self:BAG_UPDATE_COOLDOWN()
 end
 
-function Heatsink:OnDisable()
+function addon:OnDisable()
 	self:UnregisterAllEvents()
 	icd.UnregisterCallback(self, "InternalCooldowns_Proc")
 	candy.UnregisterCallback(self, "LibCandyBar_Stop")
 end
 
-function Heatsink:UpdateProfile()
+function addon:UpdateProfile()
 	db = self.db.profile
 	updateAnchor(anchor)
 end
 
-function Heatsink:RunTest()
+function addon:RunTest()
 	runTest(anchor)
 end
 
-function Heatsink:ToggleAnchor()
+function addon:ToggleAnchor()
 	toggleAnchor(anchor)
 end
 
-function Heatsink:UpdateAnchor()
+function addon:UpdateAnchor()
 	updateAnchor(anchor)
 end
 
-function Heatsink:LibCandyBar_Stop(callback, bar)
+function addon:LibCandyBar_Stop(callback, bar)
 	local a = bar:Get("anchor")
 	if a == anchor and anchor.running and anchor.running[bar] then
 		anchor.running[bar] = nil
 	end
 end
 
-function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration, source)
+function addon:InternalCooldowns_Proc(callback, item, spell, start, duration, source)
 	if db.show.proc then
 		local name, icon, _
 		if source == "ENCHANT" then
@@ -689,7 +690,7 @@ function Heatsink:InternalCooldowns_Proc(callback, item, spell, start, duration,
 	end
 end
 
-function Heatsink:ScanSpells()
+function addon:ScanSpells()
 	wipe(player)
 
 	for k,v in pairs(extra) do
@@ -726,7 +727,7 @@ function Heatsink:ScanSpells()
 	end
 end
 
-function Heatsink:ScanPetSpells()
+function addon:ScanPetSpells()
 	wipe(pet)
 	local check, pettype = HasPetSpells()
 	if check then 
@@ -742,7 +743,7 @@ function Heatsink:ScanPetSpells()
 end
 
 
-function Heatsink:CheckPVP()
+function addon:CheckPVP()
 	if db.show.pvptimer then
 		if IsPVPTimerRunning() then
 			local time = GetPVPTimer()	
@@ -754,15 +755,15 @@ function Heatsink:CheckPVP()
 	end
 end
 
-function Heatsink:LockoutReset()
+function addon:LockoutReset()
 	lockout = false
 end
 
-function Heatsink:UNIT_SPELLCAST_INTERRUPTED(unit, ...) 
+function addon:UNIT_SPELLCAST_INTERRUPTED(unit, ...) 
 	if unit == "player" then lockout = true end
 end
 
-function Heatsink:SPELL_UPDATE_COOLDOWN()
+function addon:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then 
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
@@ -788,7 +789,7 @@ function Heatsink:SPELL_UPDATE_COOLDOWN()
 	end
 end
 
-function Heatsink:PET_BAR_UPDATE_COOLDOWN()
+function addon:PET_BAR_UPDATE_COOLDOWN()
 	if db.show.pet then
 		for index, spell in pairs(pet) do
 			local start, duration, enabled = GetSpellCooldown(spell)
@@ -802,7 +803,7 @@ function Heatsink:PET_BAR_UPDATE_COOLDOWN()
 	end
 end
 
-function Heatsink:UNIT_INVENTORY_CHANGED()
+function addon:UNIT_INVENTORY_CHANGED()
 	if db.show.equipped then
 		for slot in pairs(slots) do
 			local id = (GetInventoryItemID("player", slot))
@@ -817,7 +818,7 @@ function Heatsink:UNIT_INVENTORY_CHANGED()
 	end
 end
 
-function Heatsink:BAG_UPDATE_COOLDOWN()
+function addon:BAG_UPDATE_COOLDOWN()
 	if db.show.inventory then
 		for bag = 0,4 do
 			for slot = 1, GetContainerNumSlots(bag) do
