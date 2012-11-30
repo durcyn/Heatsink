@@ -8,8 +8,8 @@ local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
+local lockout
 local anchor, db, class, faction
-local lockout = false
 local player, pet = {}, {}
 local RUNECD = 10
 
@@ -57,27 +57,6 @@ local tinsert = _G.table.insert
 local tsort = _G.table.sort
 
 local defaulticon = "Interface\\Icons\\spell_nature_timestop"
-
-local slots = {	
-		[(GetInventorySlotInfo("HeadSlot"))] = true, -- Engineering Mind Control stuff
-		[(GetInventorySlotInfo("NeckSlot"))] = true, -- Black Temple teleport necks
---		[(GetInventorySlotInfo("ShoulderSlot"))] = true,
-		[(GetInventorySlotInfo("BackSlot"))] = true, -- Engineering parachutes
---		[(GetInventorySlotInfo("ChestSlot"))] = true,
---		[(GetInventorySlotInfo("ShirtSlot"))] = true,
-		[(GetInventorySlotInfo("TabardSlot"))] = true, -- Argent Crusade teleporter
---		[(GetInventorySlotInfo("WristSlot"))] = true,
-		[(GetInventorySlotInfo("HandsSlot"))] = true, -- Engineering Rockets
---		[(GetInventorySlotInfo("WaistSlot"))] = true,
---		[(GetInventorySlotInfo("LegsSlot"))] = true,
-		[(GetInventorySlotInfo("FeetSlot"))] = true, -- Engineering Rocket Boots
-		[(GetInventorySlotInfo("Finger0Slot"))] = true, -- Kirin Tor rings, et al
-		[(GetInventorySlotInfo("Finger1Slot"))] = true,
-		[(GetInventorySlotInfo("Trinket0Slot"))] = true, 
-		[(GetInventorySlotInfo("Trinket1Slot"))] = true,
---		[(GetInventorySlotInfo("MainHandSlot"))] = true,
---		[(GetInventorySlotInfo("SecondaryHandSlot"))] = true,
-}
 
 local meta = {
 	[(GetSpellInfo(33891))] = (GetSpellInfo(106731)),  -- 33891 Tree of Life -- 106731 Incarnation
@@ -158,26 +137,27 @@ do
 	end
 	
 	function getBar(text)
-		local bar
+		local found
 		for k in pairs(anchor.running) do
 			if k.candyBarLabel:GetText() == text then
-				bar = true
+				found = true
 				break
 			end
 		end
-		return bar
+		return found
 	end
 	
 	function stopBar(text)
-		local bar
+		if not text then return end
+		local found
 		for k in pairs(anchor.running) do
-			if (not text or k.candyBarLabel:GetText() == text) then
+			if k.candyBarLabel:GetText() == text then
 				k:Stop()
-				bar = true
+				found = true
 			end
 		end
-		if bar then rearrangeBars(anchor) end
-		return bar
+		if found then rearrangeBars(anchor) end
+		return found
 	end
 	
 	function startBar(text, start, duration, icon)
@@ -631,10 +611,10 @@ end
 function addon:OnEnable()
 	self:RegisterEvent("SPELLS_CHANGED", "ScanSpells")
 	self:RegisterEvent("PET_BAR_UPDATE", "ScanPetSpells")
-	self:RegisterEvent("PET_BAR_HIDE", "ScanPetSpells")
+	self:RegisterEvent("PET_BAR_UPDATE_USABLE", "ScanPetSpells")
 	self:RegisterEvent("PLAYER_FLAGS_CHANGED", "CheckPVP")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "CheckPVP")
-	self:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+	self:RegisterEvent("LOSS_OF_CONTROL_ADDED")
 	self:RegisterBucketEvent("SPELL_UPDATE_COOLDOWN", 0.1)
 	self:RegisterBucketEvent("PET_BAR_UPDATE_COOLDOWN", 0.1)
 	self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.1)
@@ -756,27 +736,23 @@ function addon:CheckPVP()
 end
 
 function addon:LockoutReset()
-	lockout = false
+	lockout = nil
 end
 
-function addon:UNIT_SPELLCAST_INTERRUPTED(unit, ...) 
-	if unit == "player" then lockout = true end
+function addon:LOSS_OF_CONTROL_ADDED(callback, index) 
+	local loc, spell, text, icon, start, remaining, duration, school, priority, display = C_LossOfControl.GetEventInfo(index); 
+	if loc == "SPELL_INTERRUPT" then
+		startBar(school, start, duration, icon)
+		lockout = duration
+		self:ScheduleTimer("LockoutReset", duration)
+	end
 end
 
 function addon:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then 
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if lockout and lockout == duration then
-				return
-			elseif lockout == true then
-				if duration == 0 then lockout = false break end
-				self:ScheduleTimer("LockoutReset", duration)
-				startBar(INTERRUPTED, start, duration, "Interface\\Icons\\Spell_Holy_Silence")
-				lockout = duration
-				return
-			end
-
+			if lockout and lockout == duration then return end
 			if class == "DEATHKNIGHT" and duration == RUNECD then return end
 			local name, rank, icon = GetSpellInfo(spell)
 			name = meta[name] or name
@@ -805,7 +781,7 @@ end
 
 function addon:UNIT_INVENTORY_CHANGED()
 	if db.show.equipped then
-		for slot in pairs(slots) do
+		for slot = 1,17 do 
 			local id = (GetInventoryItemID("player", slot))
 			if id then
 				local start, duration, enabled = GetInventoryItemCooldown("player", slot)
