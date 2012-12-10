@@ -616,6 +616,7 @@ function addon:OnInitialize()
 	local ufg = UnitFactionGroup("player")
 	faction = "Interface\\Addons\\"..ADDON_NAME.."\\Icons\\"..ufg.."_active"
 	class = select(2, UnitClass("player"))
+	meta[class] = meta[class] or {}
 end
 
 function addon:OnEnable()
@@ -698,9 +699,7 @@ function addon:ScanSpells()
 		local _, id = GetSpellBookItemInfo(i, BOOKTYPE_SPELL)
 		local valid = IsPlayerSpell(id)
 		GetSpellInfo(spell) -- force a cache update
-		if meta[class] then
-			spell = meta[class][spell] or spell
-		end
+		spell = meta[class][spell] or spell
 		if spell and valid then tinsert(player, spell) end
 	end
 
@@ -768,9 +767,7 @@ function addon:SPELL_UPDATE_COOLDOWN()
 			if lockout and lockout == duration then return end
 			if class == "DEATHKNIGHT" and duration == RUNECD then return end
 			local name, rank, icon = GetSpellInfo(spell)
-			if meta[class] then
-				name = meta[class][name] or name
-			end
+			name = meta[class][name] or name
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
 			elseif name and duration == 0 and getBar(name) and not meta[class][name] then
