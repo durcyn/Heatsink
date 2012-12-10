@@ -14,8 +14,10 @@ local player, pet = {}, {}
 local RUNECD = 10
 
 local GameFontNormal = _G.GameFontNormal
+local SchoolStringTable = _G.SchoolStringTable
 local BOOKTYPE_PET = _G.BOOKTYPE_PET
 local BOOKTYPE_SPELL = _G.BOOKTYPE_SPELL
+local LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL = _G.LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL
 local INTERRUPTED = _G.INTERRUPTED
 local PVP = _G.PVP
 local CreateFrame = _G.CreateFrame
@@ -25,6 +27,7 @@ local GetFlyoutSlotInfo = _G.GetFlyoutSlotInfo
 local GetNumFlyouts = _G.GetNumFlyouts
 local GetPVPTimer = _G.GetPVPTimer
 local GetSpecialization = _G.GetSpecialization
+local GetSpellBookItemInfo = _G.GetSpellBookItemInfo
 local GetSpellBookItemName = _G.GetSpellBookItemName
 local GetSpellTabInfo = _G.GetSpellTabInfo
 local GetTime = _G.GetTime
@@ -53,6 +56,9 @@ local tostring = _G.tostring
 local tonumber = _G.tonumber
 local wipe = _G.wipe
 local random = _G.math.random
+local select = _G.select
+local strlower = _G.string.lower
+local strformat = _G.string.format
 local tinsert = _G.table.insert
 local tsort = _G.table.sort
 
@@ -71,10 +77,6 @@ local meta = {
 
 local symbiosis = {122292, 112997, 113002, 113004, 110698, 110700, 110701, 122288, 110588, 110597, 110600, 110617, 110788, 110730, 122289, 110791, 110707, 110715, 110717, 110718, 110570, 122282, 122285, 110575, 110802, 110807, 110803, 110806, 110621, 110693, 110694, 110696, 122291, 110810, 122290, 112970, 126458, 126449, 126453, 126456}
 
-meta["DRUID"] = meta["DRUID"] or {} 
-for k,v in pairs(symbiosis) do
-	meta["DRUID"][(GetSpellInfo(v))] = (GetSpellInfo(110309))
-end
 
 local extra = { -- doesn't appear in a spellbook scan, not worth scanning tradeskills for.
 	[(GetSpellInfo(80451))] = true, -- Survey
@@ -480,7 +482,7 @@ local options = {
 					get = function() return addon.db.profile.fontsize end,
 					set = function(i,v)
 							addon.db.profile.fontsize = v
-							addonUpdateAnchor()
+							addon:UpdateAnchor()
 						end,
 				},
 				justify = {
@@ -492,7 +494,7 @@ local options = {
 					get = function() return addon.db.profile.justify end,
 					set = function(i,v)
 							addon.db.profile.justify = v
-							addonUpdateAnchor()
+							addon:UpdateAnchor()
 						end,
 				},
 				textcolor = {
@@ -503,7 +505,7 @@ local options = {
 					get = function() return unpack(addon.db.profile.color.text) end,
 					set = function(i,r,g,b,a)
 							addon.db.profile.color.text = { r, g, b, a }
-							addonUpdateAnchor()
+							addon:UpdateAnchor()
 						end,
 				},
 			},
@@ -561,7 +563,7 @@ local options = {
 					get = function () return addon.db.profile.show.equipped end,
 					set = function (info, v)
 						addon.db.profile.show.equipped = v
-						addonUNIT_INVENTORY_CHANGED()
+						addon:UNIT_INVENTORY_CHANGED()
 					end,
 					order = 30,
 				},
@@ -572,7 +574,7 @@ local options = {
 					get = function () return addon.db.profile.show.inventory end,
 					set = function (info, v)
 						addon.db.profile.show.inventory = v
-						addonBAG_UPDATE_COOLDOWN()
+						addon:BAG_UPDATE_COOLDOWN()
 					end,
 					order = 40,
 				},
@@ -610,13 +612,19 @@ function addon:OnInitialize()
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(ADDON_NAME, options)
 	options.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(addon.db)
 	local optFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(ADDON_NAME)
-	LibStub("AceConsole-3.0"):RegisterChatCommand( string.lower(ADDON_NAME), function() InterfaceOptionsFrame_OpenToCategory(ADDON_NAME) end )
+	LibStub("AceConsole-3.0"):RegisterChatCommand( strlower(ADDON_NAME), function() InterfaceOptionsFrame_OpenToCategory(ADDON_NAME) end )
 	anchor = createAnchor(ADDON_NAME.."Anchor", ADDON_NAME)
 
 	local ufg = UnitFactionGroup("player")
 	faction = "Interface\\Addons\\"..ADDON_NAME.."\\Icons\\"..ufg.."_active"
 	class = select(2, UnitClass("player"))
 	meta[class] = meta[class] or {}
+	if class == "DRUID" then
+		for k,v in pairs(symbiosis) do
+			meta["DRUID"][(GetSpellInfo(v))] = (GetSpellInfo(110309))
+		end
+	end
+	wipe(symbiosis)
 end
 
 function addon:OnEnable()
@@ -753,7 +761,7 @@ end
 function addon:LOSS_OF_CONTROL_ADDED(callback, index) 
 	local loc, spell, text, icon, start, remaining, duration, school, priority, display = C_LossOfControl.GetEventInfo(index); 
 	if loc == "SCHOOL_INTERRUPT" then
-		local text = school and string.format(LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL, SchoolStringTable[school])
+		local text = school and strformat(LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL, SchoolStringTable[school])
 		startBar(text, start, duration, icon)
 		lockout = duration
 		self:ScheduleTimer("LockoutReset", duration)
