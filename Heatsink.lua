@@ -58,13 +58,23 @@ local tsort = _G.table.sort
 
 local defaulticon = "Interface\\Icons\\spell_nature_timestop"
 
+
 local meta = {
-	[(GetSpellInfo(33891))] = (GetSpellInfo(106731)),  -- 33891 Tree of Life -- 106731 Incarnation
-	[(GetSpellInfo(102558))] = (GetSpellInfo(106731)), --102558 Son of Ursoc -- 106731 Incarnation
-	[(GetSpellInfo(102543))] = (GetSpellInfo(106731)), -- 102543 King of the Jungle -- 106731 Incarnation
-	[(GetSpellInfo(102560))] = (GetSpellInfo(106731)),  -- 102560 Chosen of Elune -- 106731 Incarnation
-	[(GetSpellInfo(102355))] = (GetSpellInfo(770))      -- 102355 Faerie Swarm -- 770 Faerie Fire
+	["DRUID"] = {
+		[(GetSpellInfo(33891))] = (GetSpellInfo(106731)),  -- 33891 Tree of Life -- 106731 Incarnation
+		[(GetSpellInfo(102558))] = (GetSpellInfo(106731)), --102558 Son of Ursoc -- 106731 Incarnation
+		[(GetSpellInfo(102543))] = (GetSpellInfo(106731)), -- 102543 King of the Jungle -- 106731 Incarnation
+		[(GetSpellInfo(102560))] = (GetSpellInfo(106731)),  -- 102560 Chosen of Elune -- 106731 Incarnation
+		[(GetSpellInfo(102355))] = (GetSpellInfo(770))      -- 102355 Faerie Swarm -- 770 Faerie Fire
+	}
 }
+
+local symbiosis = {122292, 112997, 113002, 113004, 110698, 110700, 110701, 122288, 110588, 110597, 110600, 110617, 110788, 110730, 122289, 110791, 110707, 110715, 110717, 110718, 110570, 122282, 122285, 110575, 110802, 110807, 110803, 110806, 110621, 110693, 110694, 110696, 122291, 110810, 122290, 112970, 126458, 126449, 126453, 126456}
+
+meta["DRUID"] = meta["DRUID"] or {} 
+for k,v in pairs(symbiosis) do
+	meta["DRUID"][(GetSpellInfo(v))] = (GetSpellInfo(110309))
+end
 
 local extra = { -- doesn't appear in a spellbook scan, not worth scanning tradeskills for.
 	[(GetSpellInfo(80451))] = true, -- Survey
@@ -688,7 +698,7 @@ function addon:ScanSpells()
 		local _, id = GetSpellBookItemInfo(i, BOOKTYPE_SPELL)
 		local valid = IsPlayerSpell(id)
 		GetSpellInfo(spell) -- force a cache update
-		spell = meta[spell] or spell
+		spell = meta[class][spell] or spell
 		if spell and valid then tinsert(player, spell) end
 	end
 
@@ -756,10 +766,10 @@ function addon:SPELL_UPDATE_COOLDOWN()
 			if lockout and lockout == duration then return end
 			if class == "DEATHKNIGHT" and duration == RUNECD then return end
 			local name, rank, icon = GetSpellInfo(spell)
-			name = meta[name] or name
+			name = meta[class][name] or name
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
-			elseif name and duration == 0 and getBar(name) and not meta[name] then
+			elseif name and duration == 0 and getBar(name) and not meta[class][name] then
 				stopBar(name)
 			end
 		end
