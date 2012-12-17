@@ -56,6 +56,7 @@ local tostring = _G.tostring
 local tonumber = _G.tonumber
 local wipe = _G.wipe
 local random = _G.math.random
+local floor = _G.math.floor
 local select = _G.select
 local strlower = _G.string.lower
 local strformat = _G.string.format
@@ -763,7 +764,7 @@ function addon:LOSS_OF_CONTROL_ADDED(callback, index)
 	if loc == "SCHOOL_INTERRUPT" then
 		local text = school and strformat(LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL, SchoolStringTable[school])
 		startBar(text, start, duration, icon)
-		lockout = duration
+		lockout = floor(duration)
 		self:ScheduleTimer("LockoutReset", duration)
 	end
 end
@@ -772,7 +773,7 @@ function addon:SPELL_UPDATE_COOLDOWN()
 	if db.show.spells then 
 		for index, spell in pairs(player) do
 			local start, duration, enabled = GetSpellCooldown(spell)
-			if lockout and lockout == duration then return end
+			if lockout and duration and lockout == duration then return end
 			if class == "DEATHKNIGHT" and duration == RUNECD then return end
 			local name, rank, icon = GetSpellInfo(spell)
 			name = meta[class][name] or name
