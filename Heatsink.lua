@@ -67,12 +67,49 @@ local defaulticon = "Interface\\Icons\\spell_nature_timestop"
 
 
 local meta = {
+	["DEATHKNIGHT"] = {
+		[(GetSpellInfo(113072))] = (GetSpellInfo(110505)), -- 113072 Might of Ursoc (Blood) 
+		[(GetSpellInfo(113516))] = (GetSpellInfo(110505))  -- 113516 Wild Mushroom: Plague (Frost/Unholy) 
+	},
 	["DRUID"] = {
 		[(GetSpellInfo(33891))] = (GetSpellInfo(106731)),  -- 33891 Tree of Life -- 106731 Incarnation
 		[(GetSpellInfo(102558))] = (GetSpellInfo(106731)), --102558 Son of Ursoc -- 106731 Incarnation
 		[(GetSpellInfo(102543))] = (GetSpellInfo(106731)), -- 102543 King of the Jungle -- 106731 Incarnation
 		[(GetSpellInfo(102560))] = (GetSpellInfo(106731)),  -- 102560 Chosen of Elune -- 106731 Incarnation
 		[(GetSpellInfo(102355))] = (GetSpellInfo(770))      -- 102355 Faerie Swarm -- 770 Faerie Fire
+	},
+	["HUNTER"] = {
+		[(GetSpellInfo(113073))] = (GetSpellInfo(110505))  -- 113073 Dash 
+	},
+	["MAGE"] = {
+		[(GetSpellInfo(113074))] = (GetSpellInfo(110505))  -- 113074 Healing Touch 
+	},
+	["MONK"] = {
+		[(GetSpellInfo(113306))] = (GetSpellInfo(110505)), -- 113306 Survival Instincts (Brewmaster) 
+		[(GetSpellInfo(122286))] = (GetSpellInfo(110505)), -- 122286 Savage Defense (Windwalker) 
+		[(GetSpellInfo(113275))] = (GetSpellInfo(110505))  -- 113275 Entangling Roots (Mistweaver)
+	},
+	["PALADIN"] = {
+		[(GetSpellInfo(113269))] = (GetSpellInfo(110505)), -- 113269 Rebirth (Holh) 
+		[(GetSpellInfo(113075))] = (GetSpellInfo(110505)), -- 113075 Barkskin (Protection) 
+		[(GetSpellInfo(122287))] = (GetSpellInfo(110505))  -- 122287 Wrath (Retribution) 
+	},
+	["PRIEST"] = {
+		[(GetSpellInfo(113275))] = (GetSpellInfo(110505)), -- 113275 Entangling Roots (Disciplline/Holy)
+		[(GetSpellInfo(113277))] = (GetSpellInfo(110505))  -- 113277 Tranqility (Shadow( 
+	},
+	["ROGUE"] = {
+		[(GetSpellInfo(113613))] = (GetSpellInfo(110505))  -- 113613 Growl 
+	},
+	["SHAMAN"] = {
+		[(GetSpellInfo(113287))] = (GetSpellInfo(110505)), -- 113287 Solar Beam (Elementa/Enhancement) 
+		[(GetSpellInfo(113289))] = (GetSpellInfo(110505))  -- 113289 Prowl (Restoration) 
+	},
+	["WARLOCK"] = {
+		[(GetSpellInfo(113295))] = (GetSpellInfo(110505))  -- 113295 Rejuvenation	
+	},
+	["WARRIOR"] = {
+		[(GetSpellInfo(122294))] = (GetSpellInfo(110505))  -- 122294 Stampeding Shout
 	}
 }
 
