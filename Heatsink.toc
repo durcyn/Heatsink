@@ -1,4 +1,4 @@
-## Interface: 50100
+## Interface: 50200
 ## Title: Heatsink
 ## Notes: Cooldown tracker with bar display
 ## Author: durcyn
