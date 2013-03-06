@@ -14,7 +14,6 @@ local player, pet = {}, {}
 local RUNECD = 10
 
 local GameFontNormal = _G.GameFontNormal
-local SchoolStringTable = _G.SchoolStringTable
 local BOOKTYPE_PET = _G.BOOKTYPE_PET
 local BOOKTYPE_SPELL = _G.BOOKTYPE_SPELL
 local LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL = _G.LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL
@@ -45,6 +44,7 @@ local GetInventoryItemCooldown = _G.GetInventoryItemCooldown
 local GetInventorySlotInfo = _G.GetInventorySlotInfo
 local GetRuneCount = _G.GetRuneCount
 local GetRuneCooldown = _G.GetRuneCooldown
+local GetSchoolString = _G.GetSchoolString
 local IsPVPTimerRunning = _G.IsPVPTimerRunning
 local UnitFactionGroup = _G.UnitFactionGroup
 local UnitClass = _G.UnitClass
@@ -799,7 +799,7 @@ end
 function addon:LOSS_OF_CONTROL_ADDED(callback, index) 
 	local loc, spell, text, icon, start, remaining, duration, school, priority, display = C_LossOfControl.GetEventInfo(index); 
 	if loc == "SCHOOL_INTERRUPT" then
-		local text = school and strformat(LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL, SchoolStringTable[school])
+		local text = school and strformat(LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL, GetSchoolString[school])
 		startBar(text, start, duration, icon)
 		lockout = floor(duration)
 		self:ScheduleTimer("LockoutReset", duration)
