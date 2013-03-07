@@ -799,7 +799,7 @@ end
 function addon:LOSS_OF_CONTROL_ADDED(callback, index) 
 	local loc, spell, text, icon, start, remaining, duration, school, priority, display = C_LossOfControl.GetEventInfo(index); 
 	if loc == "SCHOOL_INTERRUPT" then
-		local text = school and strformat(LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL, GetSchoolString[school])
+		local text = school and strformat(LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL, GetSchoolString(school))
 		startBar(text, start, duration, icon)
 		lockout = floor(duration)
 		self:ScheduleTimer("LockoutReset", duration)
