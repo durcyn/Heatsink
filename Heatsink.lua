@@ -96,13 +96,14 @@ local meta = {
 	},
 	["PRIEST"] = {
 		[(GetSpellInfo(113275))] = (GetSpellInfo(110505)), -- 113275 Entangling Roots (Disciplline/Holy)
-		[(GetSpellInfo(113277))] = (GetSpellInfo(110505))  -- 113277 Tranqility (Shadow( 
+		[(GetSpellInfo(113277))] = (GetSpellInfo(110505)), -- 113277 Tranqility (Shadow)
+		[(GetSpellInfo(129250))] = (GetSpellInfo(14914))   -- 129250 Power Word: Solace, replaces 14914 Holy Fire
 	},
 	["ROGUE"] = {
 		[(GetSpellInfo(113613))] = (GetSpellInfo(110505))  -- 113613 Growl 
 	},
 	["SHAMAN"] = {
-		[(GetSpellInfo(113287))] = (GetSpellInfo(110505)), -- 113287 Solar Beam (Elementa/Enhancement) 
+		[(GetSpellInfo(113287))] = (GetSpellInfo(110505)), -- 113287 Solar Beam (Elemental/Enhancement) 
 		[(GetSpellInfo(113289))] = (GetSpellInfo(110505))  -- 113289 Prowl (Restoration) 
 	},
 	["WARLOCK"] = {
@@ -813,10 +814,10 @@ function addon:SPELL_UPDATE_COOLDOWN()
 			if lockout and duration and lockout == duration then return end
 			if class == "DEATHKNIGHT" and duration == RUNECD then return end
 			local name, rank, icon = GetSpellInfo(spell)
-			name = meta[class][name] or name
+--			name = meta[class][name] or name
 			if enabled == 1 and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
-			elseif name and duration == 0 and getBar(name) and not meta[class][name] then
+			elseif name and duration == 0 and getBar(name) then
 				stopBar(name)
 			end
 		end
