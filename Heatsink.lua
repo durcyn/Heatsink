@@ -1,69 +1,15 @@
-local _G = getfenv(0)
-local LibStub = _G.LibStub
 local ADDON_NAME, ADDON_TABLE = ...
 local addon = LibStub("AceAddon-3.0"):NewAddon(ADDON_NAME, "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
-
 local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(ADDON_NAME)
 local candy = LibStub("LibCandyBar-3.0")
 local icd = LibStub("LibInternalCooldowns-1.0")
 local media = LibStub("LibSharedMedia-3.0")
 local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
-local lockout
-local anchor, db, class, faction
-local player, pet = {}, {}
-local RUNECD = 10
-
-local GameFontNormal = _G.GameFontNormal
-local BOOKTYPE_PET = _G.BOOKTYPE_PET
-local BOOKTYPE_SPELL = _G.BOOKTYPE_SPELL
-local LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL = _G.LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL
-local INTERRUPTED = _G.INTERRUPTED
-local PVP = _G.PVP
-local CreateFrame = _G.CreateFrame
-local GetFlyoutID = _G.GetFlyoutID
-local GetFlyoutInfo = _G.GetFlyoutInfo
-local GetFlyoutSlotInfo = _G.GetFlyoutSlotInfo
-local GetNumFlyouts = _G.GetNumFlyouts
-local GetPVPTimer = _G.GetPVPTimer
-local GetSpecialization = _G.GetSpecialization
-local GetSpellBookItemInfo = _G.GetSpellBookItemInfo
-local GetSpellBookItemName = _G.GetSpellBookItemName
-local GetSpellTabInfo = _G.GetSpellTabInfo
-local GetTime = _G.GetTime
-local HasPetSpells = _G.HasPetSpells
-local IsPlayerSpell = _G.IsPlayerSpell
-local GetSpellInfo = _G.GetSpellInfo
-local GetSpellCooldown = _G.GetSpellCooldown
-local GetItemInfo = _G.GetItemInfo
-local GetContainerNumSlots = _G.GetContainerNumSlots
-local GetContainerItemID = _G.GetContainerItemID
-local GetContainerItemCooldown = _G.GetContainerItemCooldown
-local GetInventoryItemID = _G.GetInventoryItemID
-local GetInventoryItemInfo = _G.GetInventoryItemInfo
-local GetInventoryItemCooldown = _G.GetInventoryItemCooldown
-local GetInventorySlotInfo = _G.GetInventorySlotInfo
-local GetRuneCount = _G.GetRuneCount
-local GetRuneCooldown = _G.GetRuneCooldown
-local GetSchoolString = _G.GetSchoolString
-local IsPVPTimerRunning = _G.IsPVPTimerRunning
-local UnitFactionGroup = _G.UnitFactionGroup
-local UnitClass = _G.UnitClass
-
-local ipairs = _G.ipairs
-local pairs = _G.pairs
-local unpack = _G.unpack
-local tostring = _G.tostring
-local tonumber = _G.tonumber
-local wipe = _G.wipe
-local random = _G.math.random
-local floor = _G.math.floor
-local select = _G.select
-local strlower = _G.string.lower
-local strformat = _G.string.format
-local tinsert = _G.table.insert
-local tsort = _G.table.sort
 
 local defaulticon = "Interface\\Icons\\spell_nature_timestop"
+local anchor, db, class, faction, lockout
+local player, pet = {}, {}
+local RUNECD = 10
 
 
 local meta = {
@@ -131,9 +77,9 @@ do
 	local function rearrangeBars(anchor)
 		local tmp = {}
 		for bar in pairs(anchor.running) do
-			tinsert(tmp, bar)
+			table.insert(tmp, bar)
 		end
-		tsort(tmp, function(a,b) return a.remaining > b.remaining end)
+		table.sort(tmp, function(a,b) return a.remaining > b.remaining end)
 		local lastBar = nil
 		for i, bar in ipairs(tmp) do
 			bar:ClearAllPoints()
@@ -243,7 +189,7 @@ do
 	end
 	
 	function runTest(anchor)
-		local duration = random(10, 45)
+		local duration = math.random(10, 45)
 		local start = GetTime()
 		startBar(ADDON_NAME..duration, start, duration, defaulticon)
 	end
@@ -651,7 +597,7 @@ function addon:OnInitialize()
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(ADDON_NAME, options)
 	options.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(addon.db)
 	local optFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(ADDON_NAME)
-	LibStub("AceConsole-3.0"):RegisterChatCommand( strlower(ADDON_NAME), function() InterfaceOptionsFrame_OpenToCategory(ADDON_NAME) end )
+	LibStub("AceConsole-3.0"):RegisterChatCommand( string.lower(ADDON_NAME), function() InterfaceOptionsFrame_OpenToCategory(ADDON_NAME) end )
 	anchor = createAnchor(ADDON_NAME.."Anchor", ADDON_NAME)
 
 	local ufg = UnitFactionGroup("player")
@@ -732,7 +678,7 @@ function addon:ScanSpells()
 	wipe(player)
 
 	for k,v in pairs(extra) do
-		if (GetSpellInfo(k)) then tinsert(player, k) end
+		if (GetSpellInfo(k)) then table.insert(player, k) end
 	end
 
 	local tabs = 1
@@ -747,7 +693,7 @@ function addon:ScanSpells()
 		local valid = IsPlayerSpell(id)
 		GetSpellInfo(spell) -- force a cache update
 		spell = meta[class][spell] or spell
-		if spell and valid then tinsert(player, spell) end
+		if spell and valid then table.insert(player, spell) end
 	end
 
 	for i = 1, GetNumFlyouts() do
@@ -758,7 +704,7 @@ function addon:ScanSpells()
 				local id, known = GetFlyoutSlotInfo(n,j)
 				if known then
 					local spell = (GetSpellInfo(id))
-					if spell then tinsert(player,spell) end
+					if spell then table.insert(player,spell) end
 				end
 			end					
 		end
@@ -774,7 +720,7 @@ function addon:ScanPetSpells()
 		while continue do
 			local spell = GetSpellBookItemName(i, BOOKTYPE_PET)
 			if not spell then continue = false break end 
-			if spell then tinsert(pet, spell) end
+			if spell then table.insert(pet, spell) end
 			i = i + 1
 		end
 	end
@@ -800,9 +746,9 @@ end
 function addon:LOSS_OF_CONTROL_ADDED(callback, index) 
 	local loc, spell, text, icon, start, remaining, duration, school, priority, display = C_LossOfControl.GetEventInfo(index); 
 	if loc == "SCHOOL_INTERRUPT" then
-		local text = school and strformat(LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL, GetSchoolString(school))
+		local text = school and string.format(LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL, GetSchoolString(school))
 		startBar(text, start, duration, icon)
-		lockout = floor(duration)
+		lockout = math.floor(duration)
 		self:ScheduleTimer("LockoutReset", duration)
 	end
 end
@@ -870,4 +816,5 @@ function addon:BAG_UPDATE_COOLDOWN()
 			end
 		end
 	end
+	self:UNIT_INVENTORY_CHANGED()
 end
