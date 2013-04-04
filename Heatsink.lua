@@ -8,7 +8,7 @@ local AceGUIWidgetLSMlists = _G.AceGUIWidgetLSMlists
 
 local defaulticon = "Interface\\Icons\\spell_nature_timestop"
 local anchor, db, class, faction, lockout
-local player, pet = {}, {}
+local player, pet, active = {}, {}, {}
 local RUNECD = 10
 
 
@@ -76,7 +76,7 @@ do
 
 	local function rearrangeBars(anchor)
 		local tmp = {}
-		for bar in pairs(anchor.running) do
+		for bar in pairs(active) do
 			table.insert(tmp, bar)
 		end
 		table.sort(tmp, function(a,b) return a.remaining > b.remaining end)
@@ -135,7 +135,7 @@ do
 	
 	function getBar(text)
 		local found
-		for k in pairs(anchor.running) do
+		for k in pairs(active) do
 			if k.candyBarLabel:GetText() == text then
 				found = true
 				break
@@ -147,7 +147,7 @@ do
 	function stopBar(text)
 		if not text then return end
 		local found
-		for k in pairs(anchor.running) do
+		for k in pairs(active) do
 			if k.candyBarLabel:GetText() == text then
 				k:Stop()
 				found = true
@@ -159,19 +159,12 @@ do
 	
 	function startBar(text, start, duration, icon)
 		local length = start + duration - GetTime()
-		if getBar(text) then
-			for bar in pairs(anchor.running) do
-				if bar:Get("id") == text and bar:Get("start") ~= start then
-					stopBar(text)
-					startBar(text, start, duration, icon)
-				end
-			end
-		else
+		if not getBar(text) then
 			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
 			bar:Set("anchor", anchor)
 			bar:Set("id", text)
 			bar:Set("start", start)
-			anchor.running[bar] = true
+			active[bar] = true
 			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
 			bar:SetColor(unpack(db.color.bar))
 			bar.candyBarLabel:SetJustifyH(db.justify)
@@ -276,7 +269,7 @@ do
 	
 	function updateAnchor(anchor)
 		anchor:SetWidth(db.width)
-		for bar in pairs(anchor.running) do
+		for bar in pairs(active) do
 			bar.candyBarBar:SetStatusBarTexture(media:Fetch("statusbar", db.texture))
 			bar.candyBarBackground:SetTexture(media:Fetch("statusbar", db.texture))
 			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
@@ -657,8 +650,8 @@ end
 
 function addon:LibCandyBar_Stop(callback, bar)
 	local a = bar:Get("anchor")
-	if a == anchor and anchor.running and anchor.running[bar] then
-		anchor.running[bar] = nil
+	if a == anchor and active and active[bar] then
+		active[bar] = nil
 	end
 end
 
@@ -761,7 +754,7 @@ function addon:SPELL_UPDATE_COOLDOWN()
 			if class == "DEATHKNIGHT" and duration == RUNECD then return end
 			local name, rank, icon = GetSpellInfo(spell)
 --			name = meta[class][name] or name
-			if enabled == 1 and duration >= db.min and duration <= db.max then
+			if enabled == 1 and not getBar(name) and duration >= db.min and duration <= db.max then
 				startBar(name, start, duration, icon)
 			elseif name and duration == 0 and getBar(name) then
 				stopBar(name)
