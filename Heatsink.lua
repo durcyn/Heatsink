@@ -158,14 +158,15 @@ do
 	end
 	
 	function startBar(text, start, duration, icon)
+		if not text then return end
 		local length = start + duration - GetTime()
 		if length < 1 then return end
 		if length < db.min then return end
 		if length > db.max then return end
 		if getBar(text) then
-			for bar in pairs(active) do
-				if bar:Get("id") == text then
-					if bar:Get("start") ~= start then
+			for bar, barstart in pairs(active) do
+				if bar.candyBarLabel:GetText() == text then
+					if barstart ~= start then
 						stopBar(text)
 						startBar(text, start, duration, icon)
 					end
@@ -176,7 +177,7 @@ do
 			bar:Set("anchor", anchor)
 			bar:Set("id", text)
 			bar:Set("start", start)
-			active[bar] = true
+			active[bar] = start
 			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
 			bar:SetColor(unpack(db.color.bar))
 			bar.candyBarLabel:SetJustifyH(db.justify)
