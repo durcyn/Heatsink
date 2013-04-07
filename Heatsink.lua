@@ -159,7 +159,19 @@ do
 	
 	function startBar(text, start, duration, icon)
 		local length = start + duration - GetTime()
-		if not getBar(text) then
+		if length < 1 then return end
+		if length < db.min then return end
+		if length > db.max then return end
+		if getBar(text) then
+			for bar in pairs(active) do
+				if bar:Get("id") == text then
+					if bar:Get("start") ~= start then
+						stopBar(text)
+						startBar(text, start, duration, icon)
+					end
+				end
+			end
+		else
 			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
 			bar:Set("anchor", anchor)
 			bar:Set("id", text)
@@ -623,6 +635,7 @@ function addon:OnEnable()
 	self:SPELL_UPDATE_COOLDOWN()
 	self:UNIT_INVENTORY_CHANGED()
 	self:BAG_UPDATE_COOLDOWN()
+	self:CheckPVP()
 end
 
 function addon:OnDisable()
@@ -723,9 +736,9 @@ end
 function addon:CheckPVP()
 	if db.show.pvptimer then
 		if IsPVPTimerRunning() then
-			local time = GetPVPTimer()	
+			local duration = GetPVPTimer()/1000
 			local start = GetTime()
-			startBar(PVP, start, time/1000, faction)
+			startBar(PVP, start, duration, faction)
 		elseif getBar(PVP) then
 			stopBar(PVP)
 		end
@@ -753,10 +766,9 @@ function addon:SPELL_UPDATE_COOLDOWN()
 			if lockout and duration and lockout == duration then return end
 			if class == "DEATHKNIGHT" and duration == RUNECD then return end
 			local name, rank, icon = GetSpellInfo(spell)
---			name = meta[class][name] or name
-			if enabled == 1 and not getBar(name) and duration >= db.min and duration <= db.max then
+			if enabled == 1 then
 				startBar(name, start, duration, icon)
-			elseif name and duration == 0 and getBar(name) then
+			elseif duration == 0 then
 				stopBar(name)
 			end
 		end
@@ -768,9 +780,9 @@ function addon:PET_BAR_UPDATE_COOLDOWN()
 		for index, spell in pairs(pet) do
 			local start, duration, enabled = GetSpellCooldown(spell)
 			local name, rank, icon = GetSpellInfo(spell)
-			if enabled == 1 and duration >= db.min and duration <= db.max then
+			if enabled == 1 then
 				startBar(name, start, duration, icon)
-			elseif name and duration == 0 and getBar(name) then
+			elseif duration == 0 then
 				stopBar(name)
 			end
 		end
@@ -784,7 +796,7 @@ function addon:UNIT_INVENTORY_CHANGED()
 			if id then
 				local start, duration, enabled = GetInventoryItemCooldown("player", slot)
 				local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
-				if enabled == 1 and duration >= db.min and duration <= db.max then
+				if enabled == 1 then
 					startBar(name, start, duration, icon)
 				end
 			end
@@ -800,9 +812,9 @@ function addon:BAG_UPDATE_COOLDOWN()
 				if id then
 					local start, duration, enabled = GetContainerItemCooldown(bag,slot)
 					local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
-					if enabled == 1 and duration >= db.min and duration <= db.max then
+					if enabled == 1 then 
 						startBar(name, start, duration, icon)
-					elseif name and duration == 0 and getBar(name) then
+					elseif duration == 0 then 
 						stopBar(name)
 					end
 				end
