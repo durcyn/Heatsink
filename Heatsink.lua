@@ -76,7 +76,7 @@ do
 
 	local function rearrangeBars(anchor)
 		local tmp = {}
-		for bar in pairs(active) do
+		for bar in pairs(anchor.running) do
 			table.insert(tmp, bar)
 		end
 		table.sort(tmp, function(a,b) return a.remaining > b.remaining end)
@@ -135,9 +135,9 @@ do
 	
 	function getBar(text)
 		local found
-		for k in pairs(active) do
+		for k in pairs(anchor.running) do
 			if k.candyBarLabel:GetText() == text then
-				found = true
+				found = k
 				break
 			end
 		end
@@ -147,7 +147,7 @@ do
 	function stopBar(text)
 		if not text then return end
 		local found
-		for k in pairs(active) do
+		for k in pairs(anchor.running) do
 			if k.candyBarLabel:GetText() == text then
 				k:Stop()
 				found = true
@@ -163,21 +163,15 @@ do
 		if length < 1 then return end
 		if length < db.min then return end
 		if length > db.max then return end
-		if getBar(text) then
-			for bar, barstart in pairs(active) do
-				if bar.candyBarLabel:GetText() == text then
-					if barstart ~= start then
-						stopBar(text)
-						startBar(text, start, duration, icon)
-					end
-				end
+		if active[text] then
+			if active[text] ~= start then
+				stopBar(text)
+				startBar(text, start, duration, icon)
 			end
 		else
 			local bar = candy:New(media:Fetch("statusbar", db.texture), db.width, db.height)
-			bar:Set("anchor", anchor)
-			bar:Set("id", text)
-			bar:Set("start", start)
-			active[bar] = start
+			anchor.running[bar] = true
+			active[text] = start
 			bar.candyBarBackground:SetVertexColor(unpack(db.color.bg))
 			bar:SetColor(unpack(db.color.bar))
 			bar.candyBarLabel:SetJustifyH(db.justify)
@@ -663,9 +657,13 @@ function addon:UpdateAnchor()
 end
 
 function addon:LibCandyBar_Stop(callback, bar)
-	local a = bar:Get("anchor")
-	if a == anchor and active and active[bar] then
-		active[bar] = nil
+	if anchor.running[bar] then
+		anchor.running[bar] = nil
+	end
+
+	local text = bar.candyBarLabel:GetText()
+	if text and  active[text] then
+		active[text] = nil
 	end
 end
 
@@ -767,7 +765,7 @@ function addon:SPELL_UPDATE_COOLDOWN()
 			if lockout and duration and lockout == duration then return end
 			if class == "DEATHKNIGHT" and duration == RUNECD then return end
 			local name, rank, icon = GetSpellInfo(spell)
-			if enabled == 1 then
+			if enabled == 1 and duration > 0 then
 				startBar(name, start, duration, icon)
 			elseif duration == 0 then
 				stopBar(name)
@@ -781,7 +779,7 @@ function addon:PET_BAR_UPDATE_COOLDOWN()
 		for index, spell in pairs(pet) do
 			local start, duration, enabled = GetSpellCooldown(spell)
 			local name, rank, icon = GetSpellInfo(spell)
-			if enabled == 1 then
+			if enabled == 1 and duration > 0 then
 				startBar(name, start, duration, icon)
 			elseif duration == 0 then
 				stopBar(name)
@@ -797,7 +795,7 @@ function addon:UNIT_INVENTORY_CHANGED()
 			if id then
 				local start, duration, enabled = GetInventoryItemCooldown("player", slot)
 				local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
-				if enabled == 1 then
+				if enabled == 1 and duration > 0 then
 					startBar(name, start, duration, icon)
 				end
 			end
@@ -813,7 +811,7 @@ function addon:BAG_UPDATE_COOLDOWN()
 				if id then
 					local start, duration, enabled = GetContainerItemCooldown(bag,slot)
 					local name, _, _, _, _, _, _, _, _, icon = GetItemInfo(id)
-					if enabled == 1 then 
+					if enabled == 1 and duration > 0 then 
 						startBar(name, start, duration, icon)
 					elseif duration == 0 then 
 						stopBar(name)
